@@ -1,4 +1,3 @@
-
 typedef struct network_st{
     int num_layers;
     int sizes;
