@@ -26,6 +26,7 @@ void multiply_mat_vect(float** mat, float* in_vect, float* out_vect, int lines, 
 void free_vect(float* vect){
     free(vect);
 }
+
 void free_mat(float** mat, int lines){
     for(int l = 0; l < lines; ++l) free(mat[l]);
     free(mat);

@@ -1,59 +1,66 @@
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "matrice.h"
 
 // class Network(object):
 //
 //     def __init__(self, sizes):
-//         self.num_layers = len(sizes)
+//         self.nb_layers = len(sizes)
 //         self.sizes = sizes
 //         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
-//         self.weights = [np.random.randn(y, x) 
-//                         for x, y in zip(sizes[:-1], sizes[1:])]
+//         self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])]
 
 typedef struct network_st{
-    int  num_layers;
-    int* layer_sizes;
-    float*   biases_list; // list of biases between each leayer
-    float*** weight_matrices; // list of weight matrices between each layer
+    int  nb_layers;
+    int* nb_nodes;  // number of nodes per layer
+    float*   biases;   // list of biases between each leayer
+    float*** weights;  // list of weight matrices between each layer
 } network;
 
-//typedef struct network_st network;
 
-/* Mallocs our list of weight matrices */
-float*** malloc_weight_matrices(int num_layers, int lines, int cols){
-    float*** weight_matrices = calloc(num_layers, sizeof(float**));
-    for (int layer = 0; layer < num_layers; ++num_layers) {
-        weight_matrices[layer] = malloc_mat(lines, cols);
+float*** malloc_weights(int nb_layers, int* nb_nodes)
+{
+    float*** weights = calloc(nb_layers, sizeof(float**));
+
+    for (int layer = 0; layer < nb_layers -1; layer++)
+    {
+        int cols  = nb_nodes[layer];
+        int lines = nb_nodes[layer + 1];
+
+        weights[layer] = malloc_mat(lines, cols);
+
+        fill_mat(weights[layer], lines, cols);
     }
     
-    return weight_matrices;
+    return weights;
 }
 
-void free_weight_matrices(float*** weight_matrices, int num_layers, int lines){
-    for (int layer = 0; layer < num_layers; ++num_layers) {
-        free_mat(weight_matrices[layer], lines);
+void free_weights(float*** weights, int nb_layers, int* nb_nodes)
+{
+    for (int layer = 0; layer < nb_layers - 1; layer++)
+    {
+        int lines = nb_nodes[layer + 1];
+        free_mat(weights[layer], lines);
     }
-    free(weight_matrices);
+    free(weights);
 }
 
-
-network create_network(int num_layers, int* sizes){
+network malloc_network(int nb_layers, int* nb_nodes)
+{
     network net = (network){
-        num_layers,
-        sizes,
-        malloc_vect(num_layers),
-        malloc_weight_matrices(num_layers, 3, 3)
+        nb_layers,
+        nb_nodes,
+        malloc_vect(nb_layers),
+        malloc_weights(nb_layers, nb_nodes)
     };
 
     return net;
 }
 
-
-void free_network(network net){
-    free_vect(net.biases_list);
-    free_weight_matrices(net.weight_matrices, net.num_layers, 3);
-
+void free_network(network net, int nb_layers, int* nb_nodes){
+    free_vect(net.biases);
+    free_weights(net.weights, net.nb_layers, nb_nodes);
     return;
 }
 

@@ -1,11 +1,15 @@
-LIBS    = "-lm"
-CC 		= "gcc"
+LIBS    = -lm
+CC 		= gcc
 
-DEBUG_CFLAGS = -Wall -g -O0
 CFLAGS = -O3
+DEBUG_CFLAGS = -g
+
 
 ml: main.c matrice.c ml_network.c ingest.c
-	$(CC) $(CFLAGS) -o ml.out main.c matrice.c ml_network.c $(LIBS)
+	$(CC) $(DEBUG_CFLAGS) -o ml.out main.c matrice.c ml_network.c $(LIBS)
 
-debug: main.c matrice.c ingest.c
-	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -o prog main.c  matrice.c $(LIBS)
+# release: main.c matrice.c ml_network.c ingest.c
+# 	$(CC) $(CFLAGS) -o release.out main.c matrice.c ml_network.c $(LIBS)
+
+valgrind:
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose ./ml.out

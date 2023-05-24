@@ -3,29 +3,35 @@
 #include <stdio.h>
 //#include "ingest.h"
 
+#define NB_LAYERS 3
+
 int main(){
-    int lines = 3;
-    int cols = 4;
-    //float** mat = malloc_mat(lines, cols);
+    printf("Vector of sizes: \n");
 
-    float v[cols];
-    v[0] = 0; v[1] = 1; v[2] = 2; v[3] = 3;
+    int nb_nodes[NB_LAYERS] = {3, 2, 3};
+    network net = malloc_network(NB_LAYERS, nb_nodes);
+
+    // printf("Network has %d layers and %d things\n", net.sizes, net.num_layers);
+
+    printf("nodes per layer vector : \n");
+    for (int layer = 0; layer < net.nb_layers; layer++) {
+        printf("| %.0d ", net.nb_nodes[layer]);
+        printf("|\n");
+    }
+    printf("\n");
+
+    printf("Biases List : \n");
+    print_vect(net.biases, net.nb_layers);
 
 
-    network net = create_network();
+    printf("Weight Matrices\n");
+    for (int layer = 0; layer < net.nb_layers -1; layer++) {
 
-    printf("Network has %d layers and %d things\n", net.sizes, net.num_layers);
-
-    // fill_mat(mat, lines, cols);
-    // print_mat(mat, lines, cols);
-    //
-    // float out_vect[cols];
-    //
-    // print_vect(v, cols);
-    // multiply_mat_vect(mat, v, out_vect, lines, cols);
-    // print_vect(out_vect, cols);
-    //
-    // free_mat(mat, lines);
+        int cols  = net.nb_nodes[layer];
+        int lines = net.nb_nodes[layer + 1];
+        print_mat(net.weights[layer], lines, cols);
+    }
 
     return 0;
 }
+
