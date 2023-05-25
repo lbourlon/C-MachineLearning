@@ -11,17 +11,6 @@ typedef struct network_st
     float*** weights;  // list of weight matrices between each layer
 } network;
 
-/*
- *
-             (a0)
-             (a1)
-( w_00 w_01 )     (x1)
-( w_10 w_11 )  =  (x2)
-( w_20 w_21 )     (x3)
-( w_30 w_31 )     (x4)
-
- *
- * */
 
 float*** malloc_weights(int nb_layers, int* nb_nodes)
 {
@@ -69,10 +58,40 @@ void free_network(network net)
     return;
 }
 
-float sigmoid(float z_value)
-{
-    return 1 / (1 + expf(z_value));
+/* a' = sigma(wa + b) */
+float sigmoid(float z_value){
+    return 1 / (1 + expf(-z_value));
 }
+
+float* feed_forward(network net, float* input_vector){
+    float* curr_activation = input_vector;
+    float next_activation[1000]; //problems here fix later ;)
+
+    int lines = 0, cols = 0;
+    for(int layer = 0; layer < net.nb_layers - 1; layer++)
+    {
+        cols  = net.nb_nodes[layer];
+        lines = net.nb_nodes[layer + 1];
+        multiply_mat_vect(net.weights[layer], 
+                          curr_activation, 
+                          next_activation,
+                          lines,
+                          cols);
+
+        for (int lin = 0; lin < lines; lin++){
+            sigmoid(next_activation[lin] + 0);
+        }
+    }
+
+    float* out_vect = malloc(lines * sizeof(float));
+
+    for (int lin = 0; lin < lines; lin++){
+        out_vect[lin] = next_activation[lin];
+    }
+
+    return out_vect;
+}
+
 
 void print_network(network net)
 {

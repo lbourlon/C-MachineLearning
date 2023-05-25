@@ -6,7 +6,9 @@ typedef struct network_st{
 } network;
 
 network malloc_network(int nb_layers, int* nb_nodes);
-void free_network(network net);
+void free_network(network net, int nb_layers, int* nb_nodes);
+
+float* feed_forward(network net, float* input_vector);
 
 float sigmoid(float z_value);
 

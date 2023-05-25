@@ -1,8 +1,8 @@
 LIBS    = -lm
 CC 		= gcc
 
-CFLAGS = -O3
-DEBUG_CFLAGS = -g
+CFLAGS =  -O3
+DEBUG_CFLAGS =-Wall -g
 
 
 ml: main.c matrice.c ml_network.c ingest.c
