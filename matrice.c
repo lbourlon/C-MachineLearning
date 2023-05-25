@@ -15,10 +15,13 @@ float** malloc_mat(int lines, int cols){
   return mat;
 }
 
-void multiply_mat_vect(float** mat, float* in_vect, float* out_vect, int lines, int cols){
+void multiply_mat_vect(float** mat, float* in_vect, float* out_vect, int lines, int cols)
+{
+    for (int c = 0; c < cols; ++c) out_vect[c] = 0;
+
     for (int l = 0; l < lines; ++l) {
         for (int c = 0; c < cols; ++c) {
-            out_vect[c] = mat[l][c] * in_vect[c];
+            out_vect[c] += mat[l][c] * in_vect[c];
         }
     }
 }
