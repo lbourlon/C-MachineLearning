@@ -15,15 +15,25 @@ float** malloc_mat(int lines, int cols){
   return mat;
 }
 
-void multiply_mat_vect(float** mat, float* in_vect, float* out_vect, int lines, int cols)
-{
-    for (int c = 0; c < cols; ++c) out_vect[c] = 0;
-
+void print_vect(float* vect, int lines){
     for (int l = 0; l < lines; ++l) {
-        for (int c = 0; c < cols; ++c) {
-            out_vect[c] += mat[l][c] * in_vect[c];
+        printf("| %.2f ", vect[l]);
+        printf("|\n");
+    }
+    printf("\n");
+}
+
+float* multiply_mat_vect(float** mat, float* in_vect, int lines, int cols)
+{
+    float* out_vect = calloc(lines, sizeof(float));
+
+    for (int l = 0; l < lines; l++) {
+        for (int c = 0; c < cols; c++) {
+            out_vect[l] += mat[l][c] * in_vect[c];
         }
     }
+
+    return out_vect;
 }
 
 void free_mat(float** mat, int lines){
@@ -34,23 +44,16 @@ void free_mat(float** mat, int lines){
 void print_mat(float** matrice, int lines, int cols){
     printf("mat[%d][%d] = \n", lines, cols);
 
-    for (int i = 0; i < lines; ++i) {
-        printf(" | ");
-        for (int j = 0; j < cols; ++j) {
-            printf("%.2f", matrice[i][j]);
+    for (int l = 0; l < lines; ++l) {
+        printf(" |");
+        for (int c = 0; c < cols; ++c) {
+            printf(" %.2f", matrice[l][c]);
         }
         printf(" |\n");
     }
     printf("\n");
 }
 
-void print_vect(float* vect, int lines){
-    for (int l = 0; l < lines; ++l) {
-        printf("| %.2f ", vect[l]);
-        printf("|\n");
-    }
-    printf("\n");
-}
 
 
 /* Fills a Vector with random stuff */

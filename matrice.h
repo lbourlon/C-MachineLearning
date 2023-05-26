@@ -4,7 +4,7 @@ void free_mat(float** mat, int lines);
 float** malloc_mat(int lines, int cols);
 
 // Algebra
-void multiply_mat_vect(float** mat, float* in_vect, float* out_vect, int lines, int cols);
+float* multiply_mat_vect(float** mat, float* in_vect, int lines, int cols);
 void fill_vect(float* vect, int lines);
 void fill_mat(float** mat, int lines, int cols);
 
