@@ -65,31 +65,26 @@ float sigmoid(float z_value){
 
 float* feed_forward(network net, float* input_vector){
     float* curr_activation = input_vector;
-    float next_activation[1000]; //problems here fix later ;)
+    float* next_activation;
 
     int lines = 0, cols = 0;
     for(int layer = 0; layer < net.nb_layers - 1; layer++)
     {
         cols  = net.nb_nodes[layer];
         lines = net.nb_nodes[layer + 1];
-        multiply_mat_vect(net.weights[layer], 
-                          curr_activation, 
-                          next_activation,
-                          lines,
-                          cols);
+        next_activation = multiply_mat_vect(net.weights[layer], 
+                                            curr_activation, 
+                                            lines,
+                                            cols);
 
         for (int lin = 0; lin < lines; lin++){
             sigmoid(next_activation[lin] + 0);
         }
+
+        if(layer < net.nb_layers - 2) free(next_activation);
     }
 
-    float* out_vect = malloc(lines * sizeof(float));
-
-    for (int lin = 0; lin < lines; lin++){
-        out_vect[lin] = next_activation[lin];
-    }
-
-    return out_vect;
+    return next_activation;
 }
 
 
