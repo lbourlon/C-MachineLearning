@@ -2,7 +2,7 @@ LIBS    = -lm
 CC 		= gcc
 
 CFLAGS =  -O3
-DEBUG_CFLAGS =-Wall -g
+DEBUG_CFLAGS =-Wall -g -Werror
 
 
 ml: main.c matrice.c ml_network.c ingest.c

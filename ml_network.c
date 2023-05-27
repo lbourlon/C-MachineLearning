@@ -3,8 +3,7 @@
 #include <stdlib.h>
 #include "matrice.h"
 
-typedef struct network_st
-{
+typedef struct network_st{
     int  nb_layers;
     int* nb_nodes;     // number of nodes per layer
     float*   biases;   // list of biases between each leayer
@@ -30,81 +29,85 @@ float*** malloc_weights(int nb_layers, int* nb_nodes)
 }
 
 
-network malloc_network(int nb_layers, int* nb_nodes)
+network* malloc_network(int nb_layers, int* nb_nodes)
 {
-    network net = (network)
-    {
-        nb_layers,
-        nb_nodes,
-        malloc(nb_layers * sizeof(float)),
-        malloc_weights(nb_layers, nb_nodes)
-    };
+    network *net = malloc(sizeof(network));
 
-    fill_vect(net.biases, net.nb_layers);
+    net->nb_layers = nb_layers;
+    net->nb_nodes = nb_nodes;
+    net->biases = malloc((nb_layers -1) * sizeof(float));
+    net->weights = malloc_weights(nb_layers, nb_nodes);
+
+    fill_vect(net->biases, (nb_layers - 1));
 
     return net;
 }
 
-void free_network(network net)
+void free_network(network* net)
 {
-    for (int layer = 0; layer < net.nb_layers - 1; layer++)
+    for (int layer = 0; layer < net->nb_layers - 1; layer++)
     {
-        int lines = net.nb_nodes[layer + 1];
-        free_mat(net.weights[layer], lines);
+        int lines = net->nb_nodes[layer + 1];
+        free_mat(net->weights[layer], lines);
     }
-    free(net.weights);
-    free(net.biases);
+    free(net->weights);
+    free(net->biases);
+    free(net);
 
     return;
 }
 
 /* a' = sigma(wa + b) */
-float sigmoid(float z_value){
-    return 1 / (1 + expf(-z_value));
+float sigmoid(float z){
+    printf("Z : %.2f ", z);
+    return 1.0 / (1.0 + exp(-z));
 }
 
-float* feed_forward(network net, float* input_vector){
+float* feed_forward(network* net, float* input_vector){
     float* curr_activation = input_vector;
     float* next_activation;
 
     int lines = 0, cols = 0;
-    for(int layer = 0; layer < net.nb_layers - 1; layer++)
+    for(int layer = 0; layer < net->nb_layers - 1; layer++)
     {
-        cols  = net.nb_nodes[layer];
-        lines = net.nb_nodes[layer + 1];
-        next_activation = multiply_mat_vect(net.weights[layer], 
+        cols  = net->nb_nodes[layer];
+        lines = net->nb_nodes[layer + 1];
+        next_activation = multiply_mat_vect(net->weights[layer], 
                                             curr_activation, 
                                             lines,
                                             cols);
 
-        for (int lin = 0; lin < lines; lin++){
-            sigmoid(next_activation[lin] + 0);
-        }
 
-        if(layer < net.nb_layers - 2) free(next_activation);
+        for (int l = 0; l < lines; l++)
+            next_activation[l] = sigmoid(next_activation[l] + net->biases[layer]);
+
+        printf("\nActivation %d : \n", layer);
+        print_vect(next_activation, lines);
+
+        if(layer < net->nb_layers - 2) free(next_activation);
     }
 
     return next_activation;
 }
 
 
-void print_network(network net)
+void print_network(network* net)
 {
     printf("nodes per layer vector : \n");
-    for (int layer = 0; layer < net.nb_layers; layer++) {
-        printf("| %d ", net.nb_nodes[layer]);
+    for (int layer = 0; layer < net->nb_layers; layer++) {
+        printf("| %d ", net->nb_nodes[layer]);
         printf("|\n");
     }
     printf("\n");
 
     printf("Biases List : \n");
-    print_vect(net.biases, net.nb_layers);
+    print_vect(net->biases, net->nb_layers -1);
 
     printf("Weight Matrices\n");
-    for (int layer = 0; layer < net.nb_layers -1; layer++) {
+    for (int layer = 0; layer < net->nb_layers -1; layer++) {
 
-        int cols  = net.nb_nodes[layer];
-        int lines = net.nb_nodes[layer + 1];
-        print_mat(net.weights[layer], lines, cols);
+        int cols  = net->nb_nodes[layer];
+        int lines = net->nb_nodes[layer + 1];
+        print_mat(net->weights[layer], lines, cols);
     }
 }
