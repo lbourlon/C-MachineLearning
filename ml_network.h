@@ -1,7 +1,7 @@
 typedef struct network_st{
     int  nb_layers;
     int* nb_nodes;      // number of nodes per layer
-    float*   biases;    // list of biases between each leayer
+    float**   biases;    // list of biases between each leayer
     float*** weights;   // list of weight matrices between each layer
 } network;
 
