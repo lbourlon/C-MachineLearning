@@ -34,11 +34,15 @@ network* malloc_network(int nb_layers, int* nb_nodes)
     network *net = malloc(sizeof(network));
 
     net->nb_layers = nb_layers;
-    net->nb_nodes = nb_nodes;
-    net->biases = malloc((nb_layers -1) * sizeof(float));
+    net->nb_nodes  = malloc((nb_layers) * sizeof(float));
+    for (int l = 0; l < nb_layers; l++)
+        net->nb_nodes[l] = nb_nodes[l];    
+
+    net->biases  = malloc((nb_layers -1) * sizeof(float));
+    fill_vect(net->biases, (nb_layers - 1));
+
     net->weights = malloc_weights(nb_layers, nb_nodes);
 
-    fill_vect(net->biases, (nb_layers - 1));
 
     return net;
 }
@@ -51,6 +55,7 @@ void free_network(network* net)
         free_mat(net->weights[layer], lines);
     }
     free(net->weights);
+    free(net->nb_nodes);
     free(net->biases);
     free(net);
 
@@ -65,7 +70,7 @@ float sigmoid(float z){
 
 float* feed_forward(network* net, float* input_vector){
     float* curr_activation = input_vector;
-    float* next_activation;
+    float* next_activation = NULL;
 
     int lines = 0, cols = 0;
     for(int layer = 0; layer < net->nb_layers - 1; layer++)
@@ -77,14 +82,16 @@ float* feed_forward(network* net, float* input_vector){
                                             lines,
                                             cols);
 
-
         for (int l = 0; l < lines; l++)
             next_activation[l] = sigmoid(next_activation[l] + net->biases[layer]);
+
+
+        if(layer !=0) free(curr_activation);
+        curr_activation = next_activation;
 
         printf("\nActivation %d : \n", layer);
         print_vect(next_activation, lines);
 
-        if(layer < net->nb_layers - 2) free(next_activation);
     }
 
     return next_activation;

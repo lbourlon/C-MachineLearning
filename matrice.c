@@ -22,7 +22,7 @@ void free_mat(float** mat, int lines){
 
 void print_vect(float* vect, int lines){
     for (int l = 0; l < lines; ++l) {
-        printf("| %.3f ", vect[l]);
+        printf("| %.6f ", vect[l]);
         printf("|\n");
     }
     printf("\n");
