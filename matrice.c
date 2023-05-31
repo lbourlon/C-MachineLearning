@@ -16,11 +16,12 @@ float** malloc_mat(int lines, int cols){
 }
 
 void free_mat(float** mat, int lines){
-    for(int l = 0; l < lines; ++l) free(mat[l]);
+    for(int l = 0; l < lines; l++) free(mat[l]);
     free(mat);
 }
 
-void print_vect(float* vect, int lines){
+void print_vect(float* vect, int lines)
+{
     for (int l = 0; l < lines; ++l) {
         printf("| %.6f ", vect[l]);
         printf("|\n");
@@ -39,6 +40,18 @@ void print_mat(float** mat, int lines, int cols){
         printf(" |\n");
     }
     printf("\n");
+}
+
+void M_times_a_plus_b(float** Mat, float* a, float* b, float* result, int lines, int cols)
+{
+    for (int l = 0; l < lines; l++) {
+        result[l] = 0;
+        for (int c = 0; c < cols; c++) {
+            result[l] += Mat[l][c] * a[c]; 
+        }
+
+        result[l] = result[l] + b[l];
+    }
 }
 
 float* multiply_mat_vect(float** mat, float* in_vect, int lines, int cols)

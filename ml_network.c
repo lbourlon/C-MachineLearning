@@ -8,6 +8,9 @@ typedef struct network_st{
     int* nb_nodes;     // number of nodes per layer
     float**   biases;  // list of bias      lists between each layer
     float*** weights;  // list of weight matrices between each layer
+
+    float** w_activation; //list of weighted activation (pre sigmoid)
+    float** s_activation; //list of activations (post sigmoid)
 } network;
 
 typedef struct tuple_st{
@@ -20,24 +23,34 @@ network* malloc_network(int nb_layers, int* nb_nodes)
 {
     network *net = malloc(sizeof(network));
 
-    net->nb_layers = nb_layers;
-    net->nb_nodes  = malloc((nb_layers) * sizeof(float));
+    net->nb_layers  = nb_layers;
+    net->nb_nodes   = malloc((nb_layers) * sizeof(float));
 
-    for (int l = 0; l < nb_layers; l++) net->nb_nodes[l] = nb_nodes[l];    
+    net->w_activation = malloc((nb_layers) * sizeof(float*));
+    net->s_activation = malloc((nb_layers) * sizeof(float*));
 
     net->biases  = malloc((nb_layers - 1) * sizeof(float*));
     net->weights = malloc((nb_layers - 1) * sizeof(float**));
 
-    for (int layer = 0; layer < nb_layers - 1; layer++)
+    for (int l = 0; l < nb_layers; l++) net->nb_nodes[l] = nb_nodes[l];
+
+
+    for (int layer = 0; layer < nb_layers; layer++)
     {
         int cols  = nb_nodes[layer];
         int lines = nb_nodes[layer + 1];
 
-        net->biases[layer]  = malloc_vect(lines);
-        net->weights[layer] = malloc_mat(lines, cols);
+        net->w_activation[layer]  = malloc_vect(cols);
+        net->s_activation[layer]  = malloc_vect(cols);
 
-        fill_vect(net->biases[layer], lines);
-        fill_mat(net->weights[layer], lines, cols);
+        if (layer < nb_layers - 1) {
+            net->biases[layer]  = malloc_vect(lines);
+            net->weights[layer] = malloc_mat(lines, cols);
+
+            fill_vect(net->biases[layer], lines);
+            fill_mat(net->weights[layer], lines, cols);
+        }
+
     }
 
     return net;
@@ -45,12 +58,20 @@ network* malloc_network(int nb_layers, int* nb_nodes)
 
 void free_network(network* net)
 {
-    for (int layer = 0; layer < net->nb_layers - 1; layer++)
+    for (int layer = 0; layer < net->nb_layers; layer++)
     {
-        int lines = net->nb_nodes[layer + 1];
-        free(net->biases[layer]);
-        free_mat(net->weights[layer], lines);
+        if (layer < net->nb_layers - 1) {
+            int lines = net->nb_nodes[layer + 1];
+            free(net->biases[layer]);
+            free_mat(net->weights[layer], lines);
+        }
+
+        free(net->w_activation[layer]);
+        free(net->s_activation[layer]);
+
     }
+    free(net->w_activation);
+    free(net->s_activation);
     free(net->biases);
     free(net->weights);
     free(net->nb_nodes);
@@ -63,33 +84,31 @@ float sigmoid(float z){
     return 1.0 / (1.0 + exp(-z));
 }
 
-float* feed_forward(network* net, float* input_vector){
-    float* curr_activation = input_vector;
-    float* next_activation = NULL;
+void feed_forward(network* net, float* input_vector)
+{
+    int cols  = net->nb_nodes[0];
+    for (int c = 0; c < cols; c++) net->s_activation[0][c] = input_vector[c];
 
-    int lines = 0, cols = 0;
+    int lines = 0;
     for(int layer = 0; layer < net->nb_layers - 1; layer++)
     {
         cols  = net->nb_nodes[layer];
         lines = net->nb_nodes[layer + 1];
-        next_activation = multiply_mat_vect(net->weights[layer], 
-                                            curr_activation, 
-                                            lines,
-                                            cols);
 
-        for (int l = 0; l < lines; l++)
-            next_activation[l] = sigmoid(next_activation[l] + net->biases[layer][l]);
+        M_times_a_plus_b(net->weights[layer],
+                         net->s_activation[layer],
+                         net->biases[layer],
+                         net->w_activation[layer+1],
+                         lines,
+                         cols);
 
-
-        if(layer !=0) free(curr_activation);
-        curr_activation = next_activation;
+        for (int l = 0; l < lines; l++){
+            net->s_activation[layer + 1][l] = sigmoid(net->w_activation[layer + 1][l]);
+        }
 
         printf("\nActivation %d : \n", layer);
-        print_vect(next_activation, lines);
-
+        print_vect(net->s_activation[layer+1], lines);
     }
-
-    return next_activation;
 }
 
 // Fisher–Yates_shuffle
