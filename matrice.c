@@ -2,65 +2,65 @@
 #include <stdlib.h>
 #include <time.h>
 
-float* malloc_vect(int lines){
-    float* vect = calloc(lines, sizeof(float));
+float* malloc_vect(int rows){
+    float* vect = calloc(rows, sizeof(float));
     return vect;
 }
 
-float** malloc_mat(int lines, int cols){
+float** malloc_mat(int rows, int cols){
   // Allocation de matrice de taille I x J 
-  float** mat = malloc(lines * sizeof(float *));
-  for(int l = 0; l < lines; ++l) mat[l] = malloc(cols * sizeof(float));
+  float** mat = malloc(rows * sizeof(float *));
+  for(int r = 0; r < rows; ++r) mat[r] = malloc(cols * sizeof(float));
   
   return mat;
 }
 
-void free_mat(float** mat, int lines){
-    for(int l = 0; l < lines; l++) free(mat[l]);
+void free_mat(float** mat, int rows){
+    for(int r = 0; r < rows; r++) free(mat[r]);
     free(mat);
 }
 
-void print_vect(float* vect, int lines)
+void print_vect(float* vect, int rows)
 {
-    for (int l = 0; l < lines; ++l) {
-        printf("| %.6f ", vect[l]);
+    for (int r = 0; r < rows; ++r) {
+        printf("| %.6f ", vect[r]);
         printf("|\n");
     }
     printf("\n");
 }
 
-void print_mat(float** mat, int lines, int cols){
-    printf("mat[%d][%d] = \n", lines, cols);
+void print_mat(float** mat, int rows, int cols){
+    printf("mat[%d][%d] = \n", rows, cols);
 
-    for (int l = 0; l < lines; l++) {
+    for (int r = 0; r < rows; r++) {
         printf(" |");
         for (int c = 0; c < cols; c++) {
-            printf(" %.2f", mat[l][c]);
+            printf(" %.2f", mat[r][c]);
         }
         printf(" |\n");
     }
     printf("\n");
 }
 
-void M_times_a_plus_b(float** Mat, float* a, float* b, float* result, int lines, int cols)
+void M_times_a_plus_b(float** Mat, float* a, float* b, float* result, int rows, int cols)
 {
-    for (int l = 0; l < lines; l++) {
-        result[l] = 0;
+    for (int r = 0; r < rows; r++) {
+        result[r] = 0;
         for (int c = 0; c < cols; c++) {
-            result[l] += Mat[l][c] * a[c]; 
+            result[r] += Mat[r][c] * a[c]; 
         }
 
-        result[l] = result[l] + b[l];
+        result[r] = result[r] + b[r];
     }
 }
 
-float* multiply_mat_vect(float** mat, float* in_vect, int lines, int cols)
+float* multiply_mat_vect(float** mat, float* in_vect, int rows, int cols)
 {
-    float* out_vect = calloc(lines, sizeof(float));
+    float* out_vect = calloc(rows, sizeof(float));
 
-    for (int l = 0; l < lines; l++) {
+    for (int r = 0; r < rows; r++) {
         for (int c = 0; c < cols; c++) {
-            out_vect[l] += mat[l][c] * in_vect[c];
+            out_vect[r] += mat[r][c] * in_vect[c];
         }
     }
 
@@ -70,17 +70,17 @@ float* multiply_mat_vect(float** mat, float* in_vect, int lines, int cols)
 
 
 /* Fills a Vector with random stuff */
-void fill_vect(float* vect, int lines){
-    for (int l = 0; l < lines; ++l) {
-        vect[l] = drand48();
+void fill_vect(float* vect, int rows){
+    for (int r = 0; r < rows; ++r) {
+        vect[r] = drand48();
     }
 }
 
 /* Fills a Matrix with random stuff */
-void fill_mat(float** mat, int lines, int cols){
-    for (int l = 0; l < lines; ++l) {
+void fill_mat(float** mat, int rows, int cols){
+    for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
-            mat[l][c] = drand48();
+            mat[r][c] = drand48();
         }
     }
 }
