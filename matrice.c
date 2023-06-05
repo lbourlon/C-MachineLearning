@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 float* malloc_vect(int rows){
     float* vect = calloc(rows, sizeof(float));
@@ -67,6 +68,14 @@ float* multiply_mat_vect(float** mat, float* in_vect, int rows, int cols)
     return out_vect;
 }
 
+float vect_norm(float* vect, size_t n){
+    float norm = 0;
+    for (size_t x = 0; x <n ; x++) {
+        norm += sqrtf(vect[x] * vect[x]);
+    }
+
+    return norm;
+}
 
 
 /* Fills a Vector with random stuff */

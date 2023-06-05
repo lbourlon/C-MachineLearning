@@ -1,8 +1,9 @@
 LIBS    = -lm
 CC 		= clang
 
+
 CFLAGS =  -O3
-DEBUG_CFLAGS = -Wall -Wextra -Werror -g 
+DEBUG_CFLAGS = -Wall -Wextra -g 
 
 
 ml: main.c matrice.c ml_network.c

@@ -1,4 +1,5 @@
 // Memory Things
+#include <stddef.h>
 float* malloc_vect(int rows);
 void free_mat(float** mat, int rows);
 float** malloc_mat(int rows, int cols);
@@ -7,6 +8,7 @@ float** malloc_mat(int rows, int cols);
 void fill_vect(float* vect, int rows);
 void fill_mat(float** mat, int rows, int cols);
 
+float vect_norm(float* vect, size_t n);
 float* multiply_mat_vect(float** mat, float* in_vect, int rows, int cols);
 
 /* Matrix M (float)

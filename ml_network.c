@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "matrice.h"
@@ -18,6 +19,49 @@ typedef struct tuple_st{
     float desired_output;  // number of nodes per layer
 } tuple;
 
+
+typedef struct cost_data_st{
+    size_t size_out;
+    float* actual_output;
+    float* desired_output;
+} cost_data;
+
+cost_data* malloc_cost_data(size_t size_out, size_t n)
+{
+    cost_data* cdt = malloc(n * sizeof(cost_data));
+
+    cdt->size_out = size_out;
+    cdt->actual_output = malloc(size_out * sizeof(float*));
+    cdt->desired_output = malloc(size_out * sizeof(float*));
+
+    return cdt;
+}
+
+
+void free_cost_data(cost_data* cdt, size_t n){
+    for (size_t x = 0; x < n; x++) {
+        free(cdt[x].desired_output);
+        free(cdt[x].desired_output);
+    }
+    free(cdt);
+}
+
+float cost_function(cost_data* cdt, size_t nb_training_examples)
+{
+    float sum = 0.0;
+    for (size_t x = 0; x < nb_training_examples; x++)
+    {
+        float* temp = malloc(cdt->size_out * sizeof(float));
+        for (size_t i = 0; i < cdt->size_out; i++)
+        {
+            temp[i] = cdt->desired_output[i] - cdt->actual_output[i];
+        }
+        sum += vect_norm(temp, cdt->size_out);
+        free(temp);
+    }
+
+    return sum / (2*nb_training_examples);
+}
 
 network* malloc_network(int nb_layers, int* nb_nodes)
 {
@@ -78,10 +122,16 @@ void free_network(network* net)
     free(net);
 }
 
+
+
+
 /* a' = sigma(wa + b) */
 float sigmoid(float z){
-    printf("Z : %.2f ", z);
     return 1.0 / (1.0 + exp(-z));
+}
+
+float sigmoid_deriv(float z){
+    return sigmoid(z) / (1 - sigmoid(z));
 }
 
 void feed_forward(network* net, float* input_vector)
