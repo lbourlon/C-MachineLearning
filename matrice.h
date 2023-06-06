@@ -19,6 +19,8 @@ float* multiply_mat_vect(float** mat, float* in_vect, int rows, int cols);
  */
 void M_times_a_plus_b(float** Mat, float* a, float* b, float* result, int rows, int cols);
 
+void copy_matA_to_matB(int rows, int cols, float matA[rows][cols], float** matB);
+
 // Print things
 void print_mat(float** matrice, int rows, int cols);
 void print_vect(float* vect, int rows);

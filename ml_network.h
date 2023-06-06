@@ -15,6 +15,9 @@ typedef struct cost_data_st{
     float* desired_output;
 } cost_data;
 
+
+void backprop(network* net, float** in_vectors, float** expected_out, size_t iter);
+
 network* malloc_network(int nb_layers, int* nb_nodes);
 void free_network(network* net);
 

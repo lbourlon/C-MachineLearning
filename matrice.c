@@ -16,6 +16,8 @@ float** malloc_mat(int rows, int cols){
   return mat;
 }
 
+
+
 void free_mat(float** mat, int rows){
     for(int r = 0; r < rows; r++) free(mat[r]);
     free(mat);
@@ -43,6 +45,14 @@ void print_mat(float** mat, int rows, int cols){
     printf("\n");
 }
 
+void copy_matA_to_matB(int rows, int cols, float matA[rows][cols], float** matB)
+{
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            matB[r][c] = matA[r][c]; 
+        }
+    }
+}
 void M_times_a_plus_b(float** Mat, float* a, float* b, float* result, int rows, int cols)
 {
     for (int r = 0; r < rows; r++) {

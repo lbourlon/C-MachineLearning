@@ -10,8 +10,8 @@ typedef struct network_st{
     float**   biases;  // list of bias      lists between each layer
     float*** weights;  // list of weight matrices between each layer
 
-    float** w_activation; //list of weighted activation (pre sigmoid)
-    float** s_activation; //list of activations (post sigmoid)
+    float** z; //list of weighted activation (pre sigmoid)
+    float** a; //list of activations (post sigmoid)
 } network;
 
 typedef struct tuple_st{
@@ -70,8 +70,8 @@ network* malloc_network(int nb_layers, int* nb_nodes)
     net->nb_layers  = nb_layers;
     net->nb_nodes   = malloc((nb_layers) * sizeof(float));
 
-    net->w_activation = malloc((nb_layers) * sizeof(float*));
-    net->s_activation = malloc((nb_layers) * sizeof(float*));
+    net->z = malloc((nb_layers) * sizeof(float*));
+    net->a = malloc((nb_layers) * sizeof(float*));
 
     net->biases  = malloc((nb_layers - 1) * sizeof(float*));
     net->weights = malloc((nb_layers - 1) * sizeof(float**));
@@ -84,8 +84,8 @@ network* malloc_network(int nb_layers, int* nb_nodes)
         int cols  = nb_nodes[layer];
         int rows = nb_nodes[layer + 1];
 
-        net->w_activation[layer]  = malloc_vect(cols);
-        net->s_activation[layer]  = malloc_vect(cols);
+        net->z[layer]  = malloc_vect(cols);
+        net->a[layer]  = malloc_vect(cols);
 
         if (layer < nb_layers - 1) {
             net->biases[layer]  = malloc_vect(rows);
@@ -110,12 +110,12 @@ void free_network(network* net)
             free_mat(net->weights[layer], rows);
         }
 
-        free(net->w_activation[layer]);
-        free(net->s_activation[layer]);
+        free(net->z[layer]);
+        free(net->a[layer]);
 
     }
-    free(net->w_activation);
-    free(net->s_activation);
+    free(net->z);
+    free(net->a);
     free(net->biases);
     free(net->weights);
     free(net->nb_nodes);
@@ -130,14 +130,18 @@ float sigmoid(float z){
     return 1.0 / (1.0 + exp(-z));
 }
 
+
 float sigmoid_deriv(float z){
-    return sigmoid(z) / (1 - sigmoid(z));
+    
+    float sig = sigmoid(z);
+
+    return sig * (1.0 - sig);
 }
 
 void feed_forward(network* net, float* input_vector)
 {
     int cols  = net->nb_nodes[0];
-    for (int c = 0; c < cols; c++) net->s_activation[0][c] = input_vector[c];
+    for (int c = 0; c < cols; c++) net->a[0][c] = input_vector[c];
 
     int rows = 0;
     for(int layer = 0; layer < net->nb_layers - 1; layer++)
@@ -146,19 +150,64 @@ void feed_forward(network* net, float* input_vector)
         rows = net->nb_nodes[layer + 1];
 
         M_times_a_plus_b(net->weights[layer],
-                         net->s_activation[layer],
+                         net->a[layer],
                          net->biases[layer],
-                         net->w_activation[layer+1],
+                         net->z[layer+1],
                          rows,
                          cols);
 
         for (int r = 0; r < rows; r++){
-            net->s_activation[layer + 1][r] = sigmoid(net->w_activation[layer + 1][r]);
+            net->a[layer + 1][r] = sigmoid(net->z[layer + 1][r]);
         }
 
-        printf("\nActivation %d : \n", layer);
-        print_vect(net->s_activation[layer+1], rows);
+        // printf("\nActivation %d : \n", layer);
+        // print_vect(net->a[layer+1], rows);
     }
+}
+
+
+// Ugly to get proof of concept going
+void backprop(network* net, float** in_vectors, float** expected_out, size_t iter)
+{
+    int nbl = net->nb_layers;
+    int L = nbl - 1;
+    int outs = net->nb_nodes[L];
+
+
+    // where nabla C is the partial derivative of C by a
+
+    float cost = 0, tmp = 0;
+
+    float* nabla_a_C = malloc_vect(outs);
+    float* error = malloc_vect(outs);
+
+    for (size_t n = 0; n < iter; n++)
+    {
+        feed_forward(net, in_vectors[n]);
+
+        for (int o = 0; o < outs; o++) {
+            tmp = expected_out[n][o] - net->a[L][o];
+            cost += tmp * tmp;
+
+            nabla_a_C[o] += net->a[L][o] + expected_out[n][o];
+        }
+    }
+
+    cost /= 2*iter;
+
+
+    // error da = nabla C ⊙  󰘫'(-z)
+    for (int o = 0; o < outs; o++)
+    {
+        nabla_a_C[o] /= iter; 
+        printf("nabla C is %.5f\n", nabla_a_C[o]);
+        error[o] = nabla_a_C[o] * sigmoid_deriv(net->z[L][o]);
+    }
+
+    printf("Cost is %.5f\n", cost);
+
+    printf("Error : \n");
+    print_vect(error, outs);
 }
 
 // Fisher–Yates_shuffle
