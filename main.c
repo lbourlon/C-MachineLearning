@@ -35,8 +35,7 @@ int main(){
     // srand48(time(NULL));
 
     network* net = malloc_network(LAYERS, nb_nodes);
-    activations* act = malloc_activation(LAYERS, in_vectors[0], nb_nodes);
-
+    activations* act = malloc_activations(LAYERS, in_vectors[0], nb_nodes);
     feed_forward(net, act);
 
     // print_network(net);

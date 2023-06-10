@@ -1,12 +1,12 @@
 #include <stddef.h>
 typedef struct network_st{
-    int  nb_layers;
-    int* nb_nodes;     // number of nodes per layer
+    int layers;
+    int* nodes;     // number of nodes per layer
     float**   biases;  // list of bias      lists between each layer
     float*** weights;  // list of weight matrices between each layer
 
-    float** w_activation; //list of weighted activation (pre sigmoid)
-    float** s_activation; //list of activations (post sigmoid)
+    float** z; //list of weighted activation (pre sigmoid)
+    float** a; //list of activations (post sigmoid)
 } network;
 
 typedef struct cost_data_st{
@@ -15,17 +15,17 @@ typedef struct cost_data_st{
     float* desired_output;
 } cost_data;
 
-
 typedef struct activations_st{
-    int nb_layers;
+    int layers;
     float** a;
     float** z;
+    float** error;
 } activations;
 
 void backprop(network* net, float** in_vectors, float** expected_out, size_t iter);
 
 network* malloc_network(int nb_layers, int* nb_nodes);
-activations* malloc_activation(int nb_layers, float* input_vector,  int* nb_nodes);
+activations* malloc_activations(int layers, float* input_vector,  int* nb_nodes);
 
 void free_network(network* net);
 void free_activations(activations* act);
