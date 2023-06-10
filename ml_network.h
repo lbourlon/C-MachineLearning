@@ -16,12 +16,21 @@ typedef struct cost_data_st{
 } cost_data;
 
 
+typedef struct activations_st{
+    int nb_layers;
+    float** a;
+    float** z;
+} activations;
+
 void backprop(network* net, float** in_vectors, float** expected_out, size_t iter);
 
 network* malloc_network(int nb_layers, int* nb_nodes);
-void free_network(network* net);
+activations* malloc_activation(int nb_layers, float* input_vector,  int* nb_nodes);
 
-void feed_forward(network* net, float* input_vector);
+void free_network(network* net);
+void free_activations(activations* act);
+
+void feed_forward(network* net, activations* act);
 
 void print_network(network* net);
 

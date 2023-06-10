@@ -14,6 +14,12 @@ typedef struct network_st{
     float** a; //list of activations (post sigmoid)
 } network;
 
+typedef struct activations_st{
+    int nb_layers;
+    float** a;
+    float** z;
+} activations;
+
 typedef struct tuple_st{
     float input;           // number of nodes per layer
     float desired_output;  // number of nodes per layer
@@ -63,9 +69,45 @@ float cost_function(cost_data* cdt, size_t nb_training_examples)
     return sum / (2*nb_training_examples);
 }
 
+activations* malloc_activation(int nb_layers, float* input_vector,  int* nb_nodes)
+{
+    activations* act = malloc(sizeof(activations));
+
+    act->z = calloc((nb_layers), sizeof(float*));
+    act->a = calloc((nb_layers), sizeof(float*));
+    act->nb_layers = nb_layers;
+
+    for (int layer = 0; layer < act->nb_layers; layer++)
+    {
+        int cols  = nb_nodes[layer];
+
+        act->z[layer]  = malloc_vect(cols);
+        act->a[layer]  = malloc_vect(cols);
+
+    }
+
+    int cols  = nb_nodes[0];
+    for (int c = 0; c < cols; c++) act->a[0][c] = input_vector[c];
+
+    return act;
+}
+
+void free_activations(activations* act)
+{
+    for (int layer = 0; layer < act->nb_layers; layer++)
+    {
+        free(act->z[layer]);
+        free(act->a[layer]);
+
+    }
+    free(act->z);
+    free(act->a);
+}
+
+
 network* malloc_network(int nb_layers, int* nb_nodes)
 {
-    network *net = malloc(sizeof(network));
+    network* net = malloc(sizeof(network));
 
     net->nb_layers  = nb_layers;
     net->nb_nodes   = malloc((nb_layers) * sizeof(float));
@@ -124,7 +166,6 @@ void free_network(network* net)
 
 
 
-
 /* a' = sigma(wa + b) */
 float sigmoid(float z){
     return 1.0 / (1.0 + exp(-z));
@@ -138,33 +179,49 @@ float sigmoid_deriv(float z){
     return sig * (1.0 - sig);
 }
 
-void feed_forward(network* net, float* input_vector)
+void feed_forward(network* net, activations* act)
 {
-    int cols  = net->nb_nodes[0];
-    for (int c = 0; c < cols; c++) net->a[0][c] = input_vector[c];
-
-    int rows = 0;
+    int rows = 0, cols = 0;
     for(int layer = 0; layer < net->nb_layers - 1; layer++)
     {
         cols  = net->nb_nodes[layer];
         rows = net->nb_nodes[layer + 1];
 
         M_times_a_plus_b(net->weights[layer],
-                         net->a[layer],
+                         act->a[layer],
                          net->biases[layer],
-                         net->z[layer+1],
+                         act->z[layer+1],
                          rows,
                          cols);
 
         for (int r = 0; r < rows; r++){
-            net->a[layer + 1][r] = sigmoid(net->z[layer + 1][r]);
+            act->a[layer + 1][r] = sigmoid(act->z[layer + 1][r]);
         }
 
-        // printf("\nActivation %d : \n", layer);
-        // print_vect(net->a[layer+1], rows);
+        printf("\nActivation %d : \n", layer);
+        print_vect(act->a[layer+1], rows);
     }
 }
 
+/* Multiplies the matrix in the wrong order as if it were transposing it
+ * but without shifting any memory arround.
+ * As such, this function expects a 
+ * error[rows]      // error vector
+ * mat[rows][cos]   // weight matrix
+ * z[rows]          // weighted activations
+ * prior_error[cols]   // output vector (error of l-1)
+ * */
+void backprop_step(float** mat, float* error, float* z,  float* prior_error, int rows, int cols)
+{
+    for (int c = 0; c < cols; c++) {
+        prior_error[c] = 0;
+        for (int r = 0; r < rows; r++) {
+            prior_error[c] += mat[r][c] * error[r];
+        }
+
+        prior_error[c] *= sigmoid_deriv(z[c]);
+    }
+}
 
 // Ugly to get proof of concept going
 void backprop(network* net, float** in_vectors, float** expected_out, size_t iter)
@@ -174,7 +231,15 @@ void backprop(network* net, float** in_vectors, float** expected_out, size_t ite
     int outs = net->nb_nodes[L];
 
 
-    // where nabla C is the partial derivative of C by a
+    // Where my understanding is at :
+    // I need to be able to maintain in memrory "m" error[layer][]
+    // Also maintain in memory the "m" activations[layer][]
+    // Then I compute the backprop for my m training examples in mini-batch
+    // and I'll have to update my weights and biases according
+    // for this reason I get maintain weight and biases to be stored on 
+    // the network
+    //
+    // however the activations will need to be kept asside on a different structure
 
     float cost = 0, tmp = 0;
 
@@ -183,17 +248,19 @@ void backprop(network* net, float** in_vectors, float** expected_out, size_t ite
 
     for (size_t n = 0; n < iter; n++)
     {
-        feed_forward(net, in_vectors[n]);
+        // feed_forward(net, in_vectors[n], act);
 
         for (int o = 0; o < outs; o++) {
             tmp = expected_out[n][o] - net->a[L][o];
             cost += tmp * tmp;
 
             nabla_a_C[o] += net->a[L][o] + expected_out[n][o];
+            // remove this sum
         }
     }
 
     cost /= 2*iter;
+    // remove this
 
 
     // error da = nabla C ⊙  󰘫'(-z)
@@ -208,6 +275,28 @@ void backprop(network* net, float** in_vectors, float** expected_out, size_t ite
 
     printf("Error : \n");
     print_vect(error, outs);
+
+    printf("Starting Backprop : \n");
+
+
+    // needs refactoring to be able to do these
+    for(int layer = 0; layer < net->nb_layers - 1; layer++)
+    {
+
+        int cols = net->nb_nodes[layer];
+        int rows = net->nb_nodes[layer + 1];
+
+        backprop_step(net->weights[layer],
+                      error, // won't work 
+                      net->z[layer+1],
+                      error, // won't work
+                      rows,
+                      cols);
+    }
+
+    free(error);
+    free(nabla_a_C);
+
 }
 
 // Fisher–Yates_shuffle

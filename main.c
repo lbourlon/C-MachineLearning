@@ -32,9 +32,13 @@ int main(){
     print_mat(in_vectors, ITER, INPUTS);
 
     
-    srand48(time(NULL));
+    // srand48(time(NULL));
 
     network* net = malloc_network(LAYERS, nb_nodes);
+    activations* act = malloc_activation(LAYERS, in_vectors[0], nb_nodes);
+
+    feed_forward(net, act);
+
     // print_network(net);
 
     /* General Idea is to:
@@ -43,8 +47,9 @@ int main(){
      * 3. Calculate cost function on it
      **/
 
-    backprop(net, in_vectors, expected_out, ITER);
+    // backprop(net, in_vectors, expected_out, ITER);
 
+    free_activations(act);
     free_network(net);
 
     return 0;
