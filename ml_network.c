@@ -17,8 +17,8 @@ typedef struct network_st{
 typedef struct activations_st{
     int layers;
     float** a;
-    float** z;
-    float** error;
+    float** z;      // z[0] should always  = 0
+    float** error;  // same for error[0]
 } activations;
 
 typedef struct tuple_st{
@@ -100,18 +100,15 @@ activations* malloc_activations(int layers, float* input_vector,  int* nb_nodes)
 void free_activations(activations* act)
 {
     for (int layer = 0; layer < act->layers; layer++){
-        printf("A");
         free(act->z[layer]);
         free(act->a[layer]);
         free(act->error[layer]);
-        printf("B\n");
     }
-
 
     free(act->z);
     free(act->a);
-    printf("C\n");
     free(act->error);
+
     free(act);
 }
 
@@ -231,8 +228,6 @@ void backprop_step(float** mat, float* error, float* z,  float* prior_error, int
     }
 }
 
-
-// Ugly to get proof of concept going
 void backprop(network* net, float** in_vectors, float** expected_out, size_t iter)
 {
     int layers = net->layers;
@@ -240,10 +235,10 @@ void backprop(network* net, float** in_vectors, float** expected_out, size_t ite
 
     activations** acts = malloc(iter * sizeof(activations*));
 
+    float Cost = 0;
     // Calculates the first error vectors
     for (size_t n = 0; n < iter; n++)
     {
-        printf("iteration %zu\n", n);
         acts[n] = malloc_activations(layers, in_vectors[n], net->nodes);
         activations* act = acts[n];
 
@@ -254,9 +249,11 @@ void backprop(network* net, float** in_vectors, float** expected_out, size_t ite
         {
             tmp = expected_out[n][j] - act->a[layers - 1][j];
             Cost_x += (tmp * tmp) / 2;
+            Cost += Cost_x;
         }
+        // printf("iteration %zu | ", n);
+        // printf("C_x : %.8f\n", Cost_x);
 
-        printf("C_x : %f\n", Cost_x);
 
         for (int j = 0; j < rows; j++) // see readme (TODO)
         {
@@ -264,11 +261,9 @@ void backprop(network* net, float** in_vectors, float** expected_out, size_t ite
             act->error[layers-1][j] = da_Cx * sigmoid_deriv(act->z[layers - 1][j]);
         }
 
-        printf("Starting Backprop : \n");
         // Backpropagates error
         for(int layer = layers - 2; layer > 0; layer--)
-        {
-
+        { 
             int cols = net->nodes[layer];
             int rows = net->nodes[layer + 1];
 
@@ -279,20 +274,49 @@ void backprop(network* net, float** in_vectors, float** expected_out, size_t ite
                           rows,
                           cols);
         }
-        printf("End Backprop : \n");
     }
 
-    printf("yo: \n");
+    printf("Cost %.8f\n", Cost);
+
+    const float learning_rate = 5.0;
+    const float learning_coeff = learning_rate / iter;
+
+    // Gradient Descent
+    // for(int layer = layers - 2; layer > 0; layer--)
+    for(int layer = 0; layer < net->layers - 2; layer++)
+    {
+        int cols = net->nodes[layer];
+        int rows = net->nodes[layer + 1];
+
+        for (int r = 0; r < rows; r++) {
+            float d_err = 0;
+            for (size_t x = 0; x < iter; x++)
+            {
+                d_err    += acts[x]->error[layer][r];
+            }
+
+            net->biases[layer][r]     -= learning_coeff * d_err;
+
+            float d_weight = 0;
+            for (int c = 0; c < cols; c++)
+            {
+                for (size_t x = 0; x < iter; x++) {
+                    d_weight += acts[x]->error[layer+1][r] * acts[x]->a[layer][c];
+                }
+                net->weights[layer][r][c] -= learning_coeff * d_weight;
+            }
+        }
+    }
 
     for (size_t n = 0; n < iter; n++)
         free_activations(acts[n]);
     free(acts);
 }
 
-// Fisher–Yates_shuffle
-void shuffle(tuple* list, int size)
+// Fisher–Yates shuffle
+void shuffle(int* list, int size)
 {
-    tuple temp;
+    int temp;
     for(int i = size - 1; i > 0; i--)
     {
         int j = (rand() % i) + 1;
@@ -302,27 +326,6 @@ void shuffle(tuple* list, int size)
         list[i] = temp;
     }
 }
-
-
-// Add test data later
-// void stochastic_gradient_descent(tuple* training_data, int epochs, int td_size, int mini_batch_size)
-// {
-//     for (int e = 0; e < epochs; e++)
-//     {
-//         shuffle(training_data, td_size);
-//         int nb_batches = td_size / mini_batch_size;
-//         
-//         for (int nb = 0; nb_batches; nb++)
-//         {
-//             tuple current_mini_batch = training_data[nb * mini_batch_size];
-//             // Then I can pass this subset of training data (minibatch)
-//             // along with eta (the learning rate)
-//             // All of this is useless before I implement backpropagation
-//         }
-//     
-//     }
-//     
-// }
 
 
 void print_network(network* net)

@@ -6,6 +6,8 @@
 * https://en.wikipedia.org/wiki/Backpropagation
 * https://en.wikipedia.org/wiki/Linear_algebra
 
+Keeping in mind that in my implementation use a different way of aligning the 
+indices from Nielsen's book. I'll write it up bellow, when I get to it.
 
 ## Motivations
 
