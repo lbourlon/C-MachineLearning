@@ -19,13 +19,13 @@ indices from Nielsen's book. I'll write it up bellow, when I get to it.
 
 ### Cost function
 
-$$\begin{aligned}
-
+$$
+\begin{align}
 C_x &= \frac{1}{2} ||y - a^L|| ^ 2 \\
 \Leftrightarrow C_x &= \frac{1}{2} \sqrt{(y_0 - a_0^L)^ 2 + ... + (y_n - a_n^L)^2}^2\\
 \Leftrightarrow C_x &= \frac{1}{2} \sum_{i=0}^n{(y_i - a_i^L)^2}
-
-\end{aligned}$$
+\end{align}
+$$
 
 
 $$C = \frac{1}{X}\sum_{x=0}^X C_x$$
