@@ -112,6 +112,7 @@ void free_activations(activations* act)
     free(act->a);
     printf("C\n");
     free(act->error);
+    free(act);
 }
 
 
@@ -235,7 +236,7 @@ void backprop_step(float** mat, float* error, float* z,  float* prior_error, int
 void backprop(network* net, float** in_vectors, float** expected_out, size_t iter)
 {
     int layers = net->layers;
-    int rows = net->nodes[layers];
+    int rows = net->nodes[layers-1];
 
     activations** acts = malloc(iter * sizeof(activations*));
 
@@ -265,16 +266,16 @@ void backprop(network* net, float** in_vectors, float** expected_out, size_t ite
 
         printf("Starting Backprop : \n");
         // Backpropagates error
-        for(int layer = layers - 1; layer > 0; layer--)
+        for(int layer = layers - 2; layer > 0; layer--)
         {
 
             int cols = net->nodes[layer];
             int rows = net->nodes[layer + 1];
 
             backprop_step(net->weights[layer],
+                          act->error[layer + 1],
+                          act->z[layer],
                           act->error[layer],
-                          act->z[layer-1],
-                          act->error[layer - 1],
                           rows,
                           cols);
         }

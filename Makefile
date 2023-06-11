@@ -1,5 +1,5 @@
 LIBS    = -lm
-CC 		= clang
+CC	= clang
 
 
 CFLAGS =  -O3

@@ -51,6 +51,9 @@ int main(){
     free_activations(act);
     free_network(net);
 
+    free_mat(expected_out, ITER);
+    free_mat(in_vectors, ITER);
+
     return 0;
 }
 
