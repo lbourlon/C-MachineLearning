@@ -19,13 +19,21 @@ indices from Nielsen's book. I'll write it up bellow, when I get to it.
 
 ### Cost function
 
+
 $$
 \begin{align}
 C_x &= \frac{1}{2} ||y - a^L|| ^ 2 \\
-\Leftrightarrow C_x &= \frac{1}{2} \sqrt{(y_0 - a_0^L)^ 2 + ... + (y_n - a_n^L)^2}^2\\
-\Leftrightarrow C_x &= \frac{1}{2} \sum_{i=0}^n{(y_i - a_i^L)^2}
+\Leftrightarrow C_x &= \frac{1}{2} \sqrt{(y_0 - a_0^L)^ 2 + ... + (y_{N-1} - a_{N-1}^L)^2}^2\\
+\Leftrightarrow C_x &= \frac{1}{2} \sum_{n=0}^{N-1}{(y_n - a_n^L)^2}
 \end{align}
 $$
 
 
-$$C = \frac{1}{X}\sum_{x=0}^X C_x$$
+* $y$ is the vector of expected_outputs for an input $x$ vector of inputs;
+* $a^L$ is the activation of the last layer (ie output of network)
+* $C_x$ the cost, which is an estimate of how wrong the network is, for a given input $x$
+* $N-1$ is the number of nodes in the last layer
+
+$$C = \frac{1}{X}\sum_{x=0}^{X-1} C_x$$
+
+* $C$ is the average of the $C_x$ for X training inputs
