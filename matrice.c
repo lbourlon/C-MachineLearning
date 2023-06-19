@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <time.h>
 #include <math.h>
 
@@ -9,14 +10,10 @@ float* malloc_vect(int rows){
 }
 
 float** malloc_mat(int rows, int cols){
-  // Allocation de matrice de taille I x J 
-  float** mat = malloc(rows * sizeof(float *));
-  for(int r = 0; r < rows; ++r) mat[r] = malloc(cols * sizeof(float));
-  
-  return mat;
+    float** mat = malloc(rows * sizeof(float *));
+    for(int r = 0; r < rows; ++r) mat[r] = malloc(cols * sizeof(float));
+    return mat;
 }
-
-
 
 void free_mat(float** mat, int rows){
     for(int r = 0; r < rows; r++) free(mat[r]);
