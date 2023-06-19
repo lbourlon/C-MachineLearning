@@ -6,6 +6,10 @@
 * https://en.wikipedia.org/wiki/Backpropagation
 * https://en.wikipedia.org/wiki/Linear_algebra
 
+mnist data source :
+http://yann.lecun.com/exdb/mnist/
+(the ones provided in Nielsen's repo is a python pickle file)
+
 Keeping in mind that in my implementation use a different way of aligning the 
 indices from Nielsen's book. I'll write it up bellow, when I get to it.
 
@@ -14,6 +18,7 @@ indices from Nielsen's book. I'll write it up bellow, when I get to it.
 * I knew it would involve linear algebra, which I've wanted to get a refresher in. 
 * Has real implications when it comes to memory management and algorithm speeds.
 * Honestly just looked like a fun project
+* I'm now in too deep to go back D:
 
 ## Equations
 

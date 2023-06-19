@@ -4,7 +4,11 @@
 #include <stdlib.h>
 #include <stdlib.h>
 #include <time.h>
+#include "mnist_parser.h"
 //#include "ingest.h"
+
+const char* TRN_IMAGES = "./mnist/train/images.idx3";
+const char* TRN_LABELS = "./mnist/train/labels.idx1";
 
 #define OUTPUTS 4
 #define INPUTS 6
@@ -15,7 +19,7 @@
 // To Achieve Backpropagation I need :
 // [x] Keep track of the "activation" "weighted_activat" given feed-forward
 // [x]Calculate my cost function at the end given an expected output
-// [ ]Compute it's error and start backpropagation
+// [x]Compute it's error and start backpropagation
 //    (easier said than understood)
 
 int main(){
@@ -31,25 +35,29 @@ int main(){
     print_mat(expected_out, ITER, INPUTS);
     print_mat(in_vectors, ITER, INPUTS);
 
-    
     // srand48(time(NULL));
 
     network* net = malloc_network(LAYERS, nb_nodes);
     // activations* act = malloc_activations(LAYERS, in_vectors[0], nb_nodes);
     // feed_forward(net, act);
 
-     // print_network(net);
+    // for (int i = 0; i < 15; i++) {
+    //     backprop(net, in_vectors, expected_out, ITER);
+    // }
 
-    /* General Idea is to:
-     * 1. Feed forward n times, saving each time the last activation
-     * 2. For each iteration, track the input vector x, and expected y(x)
-     * 3. Calculate cost function on it
-     **/
 
-    for (int i = 0; i < 50; i++) {
-        backprop(net, in_vectors, expected_out, ITER);
-    }
+    int batch_size = 100;
+    int batch_offset = 0;
 
+    uint8_t* labels = parse_labels(TRN_LABELS, batch_size, batch_offset);
+    float** images = parse_images(TRN_IMAGES, batch_size, batch_offset);
+    
+    int target_img = 2;
+    print_img(images[target_img], labels[target_img]);
+
+
+    free(labels);
+    free(images);
 
     // free_activations(act);
     free_network(net);

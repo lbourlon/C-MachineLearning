@@ -254,7 +254,7 @@ void backprop(network* net, float** in_vectors, float** expected_out, size_t ite
         // printf("iteration %zu | ", n);
         // printf("C_x : %.8f\n", Cost_x);
 
-
+        // Calculates first error
         for (int j = 0; j < rows; j++) // see readme (TODO)
         {
             float da_Cx = act->a[layers - 1][j] - expected_out[n][j];
@@ -282,7 +282,6 @@ void backprop(network* net, float** in_vectors, float** expected_out, size_t ite
     const float learning_coeff = learning_rate / iter;
 
     // Gradient Descent
-    // for(int layer = layers - 2; layer > 0; layer--)
     for(int layer = 0; layer < net->layers - 2; layer++)
     {
         int cols = net->nodes[layer];
