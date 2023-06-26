@@ -1,108 +1,137 @@
 #include <math.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "matrice.h"
 
-typedef struct network_st{
+typedef struct network_st {
     int layers;
-    int* nodes;     // number of nodes per layer
-    float**   biases;  // list of bias      lists between each layer
-    float*** weights;  // list of weight matrices between each layer
+    int* nodes;         // number of nodes per layer
+    double** biases;     // list of bias between each layer
+    double*** weights;   // list of weight matrices between each layer
 
-    float** z; //list of weighted activation (pre sigmoid)
-    float** a; //list of activations (post sigmoid)
+    int size_in;
+    int size_out;
 } network;
 
-typedef struct activations_st{
-    int layers;
-    float** a;
-    float** z;      // z[0] should always  = 0
-    float** error;  // same for error[0]
+typedef struct activations_st {
+    double** a;
+    double** z;      // z[0] should always  = 0
+    double** error;  // same for error[0]
+
+    double* nw_input;
+    double* nw_output;
+    double* last_z;
+    double* last_error;
 } activations;
 
-typedef struct tuple_st{
-    float input;           // number of nodes per layer
-    float desired_output;  // number of nodes per layer
-} tuple;
 
-
-typedef struct cost_data_st{
-    size_t size_out;
-    float* actual_output;
-    float* desired_output;
-} cost_data;
-
-cost_data* malloc_cost_data(size_t size_out, size_t n)
+void print_network(network* net)
 {
-    cost_data* cdt = malloc(n * sizeof(cost_data));
-
-    cdt->size_out = size_out;
-    cdt->actual_output = malloc(size_out * sizeof(float*));
-    cdt->desired_output = malloc(size_out * sizeof(float*));
-
-    return cdt;
-}
-
-
-void free_cost_data(cost_data* cdt, size_t n){
-    for (size_t x = 0; x < n; x++) {
-        free(cdt[x].desired_output);
-        free(cdt[x].desired_output);
+    printf("Nodes per layer vector : \n");
+    for (int l = 0; l < net->layers; l++) {
+        printf("| %3d ", net->nodes[l]);
+        printf("|\n");
     }
-    free(cdt);
-}
+    printf("\n");
 
-float cost_function(cost_data* cdt, size_t nb_training_examples)
-{
-    float sum = 0.0;
-    for (size_t x = 0; x < nb_training_examples; x++)
+    printf("Biases List : \n");
+    for (int l = 1; l < net->layers; l++)
     {
-        float* temp = malloc(cdt->size_out * sizeof(float));
-        for (size_t i = 0; i < cdt->size_out; i++)
-        {
-            temp[i] = cdt->desired_output[i] - cdt->actual_output[i];
-        }
-        sum += vect_norm(temp, cdt->size_out);
-        free(temp);
+        int rows = net->nodes[l];
+        print_vect(net->biases[l], rows);
     }
 
-    return sum / (2*nb_training_examples);
+    printf("Weight Matrices\n");
+    for (int l = 1; l < net->layers; l++)
+    {
+        int cols = net->nodes[l-1];
+        int rows = net->nodes[l];
+        print_mat(net->weights[l], rows, cols);
+    }
 }
 
-activations* malloc_activations(int layers, float* input_vector,  int* nb_nodes)
+void activations_print(network* net, activations* act, int which) {
+    char* yo[] = {"act", "zed", "err"};
+    printf("----------------------------------------\n");
+
+    if(which == 0){
+        for (int l = 0; l < net->layers; l++) {
+            int rows = net->nodes[l];
+            printf("%s[%d] |", yo[which], l);
+
+            for (int r = 0; r < rows; r++) printf(" %.4f", act->a[l][r]);
+            printf("|\n");
+        }
+    }
+
+    if (which == 1) {
+        printf("%s[0] | %.4f|\n", yo[which], act->z[0][0]);
+
+        for (int l = 1; l < net->layers; l++) {
+            int rows = net->nodes[l];
+
+            printf("%s[%d] |", yo[which], l);
+            for (int r = 0; r < rows; r++) printf(" %.4f", act->z[l][r]);
+            printf("|\n");
+        }
+    }
+    if (which == 2){
+        printf("%s[0] | %.4f|\n", yo[which], act->error[0][0]);
+        for (int l = 1; l < net->layers; l++) {
+            int rows = net->nodes[l];
+
+            printf("%s[%d] |", yo[which], l);
+            for (int r = 0; r < rows; r++) printf(" %.9f", act->error[l][r]);
+            printf("|\n");
+        }
+    }
+
+
+    printf("\n----------------------------------------\n");
+}
+
+activations* activations_malloc(network* net, double* input_vector)
 {
     activations* act = malloc(sizeof(activations));
 
-    act->z = calloc((layers), sizeof(float*));
-    act->a = calloc((layers), sizeof(float*));
-    act->error = calloc((layers), sizeof(float*));
+    act->z = calloc((net->layers), sizeof(double*));
+    act->a = calloc((net->layers), sizeof(double*));
+    act->error = calloc((net->layers), sizeof(double*));
 
-    act->layers = layers;
+    act->a[0]  = malloc_vect(net->nodes[0]);
+    act->z[0]  = malloc_vect(1);
+    act->error[0]  = malloc_vect(1);
 
-    for (int layer = 0; layer < act->layers; layer++)
+    for (int l = 1; l < net->layers; l++)
     {
-        int cols  = nb_nodes[layer];
+        int cols  = net->nodes[l];
 
-        act->z[layer]  = malloc_vect(cols);
-        act->a[layer]  = malloc_vect(cols);
-        act->error[layer]  = malloc_vect(cols);
+        act->z[l]  = malloc_vect(cols);
+        act->a[l]  = malloc_vect(cols);
+        act->error[l]  = malloc_vect(cols);
 
     }
 
-    int cols  = nb_nodes[0];
+    int cols  = net->nodes[0];
     for (int c = 0; c < cols; c++)
         act->a[0][c] = input_vector[c];
+
+    act->nw_input = act->a[0];
+    act->nw_output = act->a[net->layers - 1];
+    act->last_z = act->z[net->layers - 1];
+    act->last_error = act->error[net->layers -1];
 
     return act;
 }
 
-void free_activations(activations* act)
+void activations_free(activations* act, int layers)
 {
-    for (int layer = 0; layer < act->layers; layer++){
-        free(act->z[layer]);
-        free(act->a[layer]);
-        free(act->error[layer]);
+    for (int l = 0; l < layers; l++){
+        free(act->z[l]);
+        free(act->a[l]);
+        free(act->error[l]);
     }
 
     free(act->z);
@@ -113,202 +142,213 @@ void free_activations(activations* act)
 }
 
 
-network* malloc_network(int nb_layers, int* nb_nodes)
+network* network_malloc(int layers, int* nodes)
 {
     network* net = malloc(sizeof(network));
 
-    net->layers  = nb_layers;
-    net->nodes  = malloc((nb_layers) * sizeof(float));
+    net->layers = layers;
+    net->size_in = nodes[0];
+    net->size_out = nodes[layers - 1];
+    net->nodes = malloc((layers) * sizeof(double));
 
-    net->z = malloc((nb_layers) * sizeof(float*));
-    net->a = malloc((nb_layers) * sizeof(float*));
+    net->biases = malloc(layers * sizeof(double*));
+    net->weights = malloc(layers * sizeof(double**));
 
-    net->biases  = malloc((nb_layers - 1) * sizeof(float*));
-    net->weights = malloc((nb_layers - 1) * sizeof(float**));
+    for (int l= 0; l < layers; l++)
+        net->nodes[l] = nodes[l];
 
-    for (int l= 0; l < nb_layers; l++) net->nodes[l] = nb_nodes[l];
+    net->biases[0]  = malloc_vect(1);
+    net->weights[0] = malloc_mat(1, 1);
 
-    for (int layer = 0; layer < nb_layers; layer++)
+    for (int l = 1; l < layers; l++)
     {
-        int cols = nb_nodes[layer];
-        int rows = nb_nodes[layer + 1];
+        int cols = nodes[l-1];
+        int rows = nodes[l];
 
-        net->z[layer]  = malloc_vect(cols);
-        net->a[layer]  = malloc_vect(cols);
+        net->biases[l]  = malloc_vect(rows);
+        net->weights[l] = malloc_mat(rows, cols);
 
-        if (layer < nb_layers - 1) {
-            net->biases[layer]  = malloc_vect(rows);
-            net->weights[layer] = malloc_mat(rows, cols);
-
-            fill_vect(net->biases[layer], rows);
-            fill_mat(net->weights[layer], rows, cols);
-        }
-
+        fill_vect(net->biases[l], rows);
+        fill_mat(net->weights[l], rows, cols);
     }
 
     return net;
 }
 
-void free_network(network* net)
+void network_free(network* net)
 {
-    for (int layer = 0; layer < net->layers; layer++)
+    free_mat(net->weights[0], 1);
+    free(net->biases[0]);
+    
+    for (int l = 1; l < net->layers; l++)
     {
-        if (layer < net->layers - 1) {
-            int rows = net->nodes[layer + 1];
-            free(net->biases[layer]);
-            free_mat(net->weights[layer], rows);
-        }
-
-        free(net->z[layer]);
-        free(net->a[layer]);
-
+        int rows = net->nodes[l];
+        free_mat(net->weights[l], rows);
+        free(net->biases[l]);
     }
-    free(net->z);
-    free(net->a);
     free(net->biases);
     free(net->weights);
     free(net->nodes);
     free(net);
 }
 
-
-
 /* a' = sigma(wa + b) */
-float sigmoid(float z){
+double sigmoid(double z) {
     return 1.0 / (1.0 + exp(-z));
 }
 
-
-float sigmoid_deriv(float z){
-    
-    float sig = sigmoid(z);
-    return sig * (1.0 - sig);
+double d_sigmoid(double z) {
+    double sig = sigmoid(z);
+    return sig * (1.0-sig);
 }
 
-void feed_forward(network* net, activations* act)
+// looks good
+void network_feed_forward(network* net, activations* act)
 {
     int rows = 0, cols = 0;
-    for(int layer = 0; layer < net->layers - 1; layer++)
+    for(int l = 1; l < net->layers; l++)
     {
-        cols  = net->nodes[layer];
-        rows = net->nodes[layer + 1];
-
-        M_times_a_plus_b(net->weights[layer],
-                         act->a[layer],
-                         net->biases[layer],
-                         act->z[layer+1],
-                         rows,
-                         cols);
-
-        for (int r = 0; r < rows; r++){
-            act->a[layer + 1][r] = sigmoid(act->z[layer + 1][r]);
-        }
-
-        // print_vect(act->a[layer+1], rows);
-    }
-}
-
-/* Multiplies the matrix in the wrong order as if it were transposing it
- * but without shifting any memory arround.
- * As such, this function expects a 
- * error[rows]      // error vector
- * mat[rows][cos]   // weight matrix
- * z[rows]          // weighted activations
- * prior_error[cols]   // output vector (error of l-1)
- * */
-void backprop_step(float** mat, float* error, float* z,  float* prior_error, int rows, int cols)
-{
-    for (int c = 0; c < cols; c++){
-        prior_error[c] = 0;
-        for (int r = 0; r < rows; r++) {
-            prior_error[c] += mat[r][c] * error[r];
-        }
-
-        prior_error[c] *= sigmoid_deriv(z[c]);
-    }
-}
-
-void backprop(network* net, float** in_vectors, float** expected_out, size_t iter)
-{
-    int layers = net->layers;
-    int rows = net->nodes[layers-1];
-
-    activations** acts = malloc(iter * sizeof(activations*));
-
-    float Cost = 0;
-    // Calculates the first error vectors
-    for (size_t n = 0; n < iter; n++)
-    {
-        acts[n] = malloc_activations(layers, in_vectors[n], net->nodes);
-        activations* act = acts[n];
-
-        feed_forward(net, act);
-
-        float Cost_x = 0, tmp = 0;
-        for (int j = 0; j < rows; j++) // See readme for equation (not strictly needed for backprop)
-        {
-            tmp = expected_out[n][j] - act->a[layers - 1][j];
-            Cost_x += (tmp * tmp) / 2;
-            Cost += Cost_x;
-        }
-        // printf("iteration %zu | ", n);
-        // printf("C_x : %.8f\n", Cost_x);
-
-        // Calculates first error
-        for (int j = 0; j < rows; j++) // see readme (TODO)
-        {
-            float da_Cx = act->a[layers - 1][j] - expected_out[n][j];
-            act->error[layers-1][j] = da_Cx * sigmoid_deriv(act->z[layers - 1][j]);
-        }
-
-        // Backpropagates error
-        for(int layer = layers - 2; layer > 0; layer--)
-        { 
-            int cols = net->nodes[layer];
-            int rows = net->nodes[layer + 1];
-
-            backprop_step(net->weights[layer],
-                          act->error[layer + 1],
-                          act->z[layer],
-                          act->error[layer],
-                          rows,
-                          cols);
-        }
-    }
-
-    printf("Cost %.8f\n", Cost);
-
-    const float learning_rate = 5.0;
-    const float learning_coeff = learning_rate / iter;
-
-    // Gradient Descent
-    for(int layer = 0; layer < net->layers - 2; layer++)
-    {
-        int cols = net->nodes[layer];
-        int rows = net->nodes[layer + 1];
+        cols = net->nodes[l-1];
+        rows = net->nodes[l];
 
         for (int r = 0; r < rows; r++) {
-            float d_err = 0;
-            for (size_t x = 0; x < iter; x++)
-            {
-                d_err    += acts[x]->error[layer][r];
+            for (int c = 0; c < cols; c++) {
+                act->z[l][r] += net->weights[l][r][c] * act->a[l-1][c]; 
             }
+            act->a[l][r] = sigmoid(act->z[l][r] + net->biases[l][r]);
+        }
+    }
+}
 
-            net->biases[layer][r]     -= learning_coeff * d_err;
 
-            float d_weight = 0;
+/* Multiplies the matrix in the wrong order as if it were transposing it but without shifting any memory arround. Might be slower, because of 
+ * non contiguous jumps in memory, but easier than transposing.
+ * */
+
+// Looks good
+void backprop_error(network* net, activations* act)
+{
+    for(int l = net->layers - 2; l > 0; l--)
+    { 
+        int cols = net->nodes[l];
+        int rows = net->nodes[l+1];
+
+        for (int c = 0; c < cols; c++) {
+            for (int r = 0; r < rows; r++) {
+                act->error[l][c] += net->weights[l+1][r][c] * act->error[l+1][r];
+            }
+            act->error[l][c] *= d_sigmoid(act->z[l][c]);
+        }
+    }
+}
+
+// looks good
+void nw_gradient_descent(network* net, activations** acts, double learning_coeff, size_t batch_size) {
+    for(int l = net->layers - 1; l > 0; l--)
+    {
+        int cols = net->nodes[l-1];
+        int rows = net->nodes[l];
+
+        for (int r = 0; r < rows; r++) {
+            double d_weight = 0;
             for (int c = 0; c < cols; c++)
             {
-                for (size_t x = 0; x < iter; x++) {
-                    d_weight += acts[x]->error[layer+1][r] * acts[x]->a[layer][c];
+                for (size_t x = 0; x < batch_size; x++) 
+                {
+                    d_weight += acts[x]->error[l][r] * acts[x]->a[l-1][c];
                 }
-                net->weights[layer][r][c] -= learning_coeff * d_weight;
+                net->weights[l][r][c] -= learning_coeff * d_weight;
             }
+            // printf("d_err : %0.3f\n",d_weight);
+        }
+
+        for (int r = 0; r < rows; r++) {
+            double d_err = 0;
+            for (size_t x = 0; x < batch_size; x++) {
+                d_err += acts[x]->error[l][r];
+            }
+            net->biases[l][r] -= learning_coeff * d_err;
         }
     }
+}
 
-    for (size_t n = 0; n < iter; n++)
-        free_activations(acts[n]);
+void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_size)
+{
+    activations** acts = malloc(batch_size * sizeof(activations*));
+
+    double Cost = 0;
+    for (size_t x = 0; x < batch_size; x++)
+    {
+        acts[x] = activations_malloc(net, images[x]);
+        activations* act = acts[x];
+
+        // 1st step
+        network_feed_forward(net, act);
+
+        double* expected_out = calloc(net->size_out, sizeof(double));
+        expected_out[(int)labels[x]] = 1.0;
+
+        double tmp_f = 0;
+        for (int k = 0; k < net->size_out; k++)
+        {
+            tmp_f = expected_out[k] - act->nw_output[k];
+            Cost += (tmp_f * tmp_f);
+
+            // 2nd step // this is good
+            double da_Cx = act->nw_output[k] - expected_out[k];
+            act->last_error[k] = da_Cx * d_sigmoid(act->last_z[k]);
+
+            //printf("da_Cx %f, last_error : %f\n", da_Cx, act->last_error[k]);
+        }
+
+        print_vect(act->nw_output, net->size_out);
+        print_vect(expected_out, net->size_out);
+        print_vect(act->last_error, net->size_out);
+
+        // for (int m = 0; m < net->size_out; m++) {
+        //
+        //     printf("err_1 : %f | %f : err_2\n",act->error[net->layers-1][m], act->last_error[m]);
+        // }
+        //
+        // activations_print(net, act, 2);
+
+        // 3rd step  // issue here
+        // activations_print(net, act,1);
+        backprop_error(net, act);
+        // activations_print(net, act,2);
+
+        free(expected_out);
+
+        // printf("iteration %zu | ", x);
+        // printf("C_x : %.8f\n",tmp_f * tmp_f);
+    }
+
+    Cost /= (batch_size);
+    printf("Cost %.6f\n", Cost);
+
+    const double learning_rate = 0.1;
+    const double learning_coeff = learning_rate / batch_size;
+
+    // print_network(net);
+    nw_gradient_descent(net, acts, learning_coeff, batch_size);
+    // print_network(net);
+    // activations_print(net, acts[0], 2);
+
+
+    // for (int i = 0; i < net->size_in; i++){
+    //     printf("a : %f | %f : i\n", acts[0]->a[0][i], images[0][i]);
+    // } 
+    // for (int i = 0; i < net->nodes[1]; i++) {
+    //     printf("z : %f | %f : b\n", acts[0]->z[0][i], net->biases[0][i]);
+    // }
+
+    // for (int i = 0; i < net->size_in; i++){
+    //     printf("e : %f | %f : i\n", acts[0]->error[0][i], images[0][i]);
+    // } 
+
+
+    for (size_t x = 0; x < batch_size; x++)
+        activations_free(acts[x], net->layers);
     free(acts);
 }
 
@@ -326,28 +366,3 @@ void shuffle(int* list, int size)
     }
 }
 
-
-void print_network(network* net)
-{
-    printf("Nodes per layer vector : \n");
-    for (int layer = 0; layer < net->layers; layer++) {
-        printf("| %3d ", net->nodes[layer]);
-        printf("|\n");
-    }
-    printf("\n");
-
-    printf("Biases List : \n");
-    for (int layer = 0; layer < net->layers -1; layer++)
-    {
-        int rows = net->nodes[layer + 1];
-        print_vect(net->biases[layer], rows);
-    }
-
-    printf("Weight Matrices\n");
-    for (int layer = 0; layer < net->layers -1; layer++)
-    {
-        int cols = net->nodes[layer];
-        int rows = net->nodes[layer + 1];
-        print_mat(net->weights[layer], rows, cols);
-    }
-}

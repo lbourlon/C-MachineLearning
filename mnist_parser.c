@@ -30,7 +30,7 @@ uint8_t* parse_labels(const char* labels_path, size_t batch_size, size_t batch_o
     // uint8_t magic_number     = reverse(header[0]);
     uint32_t nb_labels = reverse(header[1]);
 
-    printf("Reading [%zu to %zu] out of %d labels\n", batch_offset, batch_offset + batch_size, nb_labels);
+    // printf("Reading [%zu to %zu] out of %d labels\n", batch_offset, batch_offset + batch_size, nb_labels);
 
     if(batch_size + batch_offset >= nb_labels){
         printf("Trying to read outside of file!\n");
@@ -48,7 +48,7 @@ uint8_t* parse_labels(const char* labels_path, size_t batch_size, size_t batch_o
     return labels;
 }
 
-float** parse_images(const char* images_path, size_t batch_size, size_t batch_offset)
+double** parse_images(const char* images_path, size_t batch_size, size_t batch_offset)
 {
     int header_size = 16;
     uint32_t* header = calloc(header_size, sizeof(uint32_t));
@@ -64,7 +64,7 @@ float** parse_images(const char* images_path, size_t batch_size, size_t batch_of
     uint32_t nb_rows = reverse(header[2]);
     uint32_t nb_cols = reverse(header[3]);
 
-    printf("Reading [%zu to %zu] out of %d images\n", batch_offset, batch_offset + batch_size, nb_images);
+    // printf("Reading [%zu to %zu] out of %d images\n", batch_offset, batch_offset + batch_size, nb_images);
 
     if(batch_size + batch_offset >= nb_images){
         printf("Trying to read outside of file!\n");
@@ -84,9 +84,9 @@ float** parse_images(const char* images_path, size_t batch_size, size_t batch_of
     if (out_i == -1) perror("read");
 
     // makes it easier later, don't worry about it
-    float** images = malloc(batch_size * sizeof(float*));
+    double** images = malloc(batch_size * sizeof(double*));
     for (size_t i = 0; i < batch_size; i++) {
-        images[i] = malloc(nb_pixels * sizeof(float));
+        images[i] = malloc(nb_pixels * sizeof(double));
 
         for (size_t p = 0; p < nb_pixels; p++) {
             images[i][p] = (images_concat[nb_pixels * i + p] / 255.0);
@@ -101,7 +101,7 @@ float** parse_images(const char* images_path, size_t batch_size, size_t batch_of
 }
 
 // I assume its of size 28, 28
-void print_img(float* img, int label){
+void print_img(double* img, int label){
     printf("\nHere's your : %d\n", label);
     char ascii_map[] = " .-+=*#@";
 

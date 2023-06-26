@@ -1,39 +1,37 @@
 #include <stddef.h>
-typedef struct network_st{
-    int layers;
-    int* nodes;     // number of nodes per layer
-    float**   biases;  // list of bias      lists between each layer
-    float*** weights;  // list of weight matrices between each layer
+#include <stdint.h>
 
-    float** z; //list of weighted activation (pre sigmoid)
-    float** a; //list of activations (post sigmoid)
+typedef struct network_st {
+    int layers;
+    int* nodes;         // number of nodes per layer
+    double** biases;     // list of bias      lists between each layer
+    double*** weights;   // list of weight matrices between each layer
+
+    int size_in;
+    int size_out;
 } network;
 
-typedef struct cost_data_st{
-    size_t size_out;
-    float* actual_output;
-    float* desired_output;
-} cost_data;
+typedef struct activations_st {
+    double** a;
+    double** z;      // z[0] should always  = 0
+    double** error;  // same for error[0]
 
-typedef struct activations_st{
-    int layers;
-    float** a;
-    float** z;
-    float** error;
+    double* nw_input;
+    double* nw_output;
+    double* last_z;
+    double* last_error;
 } activations;
 
-void backprop(network* net, float** in_vectors, float** expected_out, size_t iter);
 
-network* malloc_network(int nb_layers, int* nb_nodes);
-activations* malloc_activations(int layers, float* input_vector,  int* nb_nodes);
 
-void free_network(network* net);
-void free_activations(activations* act);
+network* network_malloc(int nb_layers, int* nb_nodes);
+void network_free(network* net);
 
-void feed_forward(network* net, activations* act);
+activations* activations_malloc(network* net, double* input_vector);
+void activations_free(activations* act, int layers);
+void activations_print(network* net, activations* act, int which);
+
+void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_size);
+void network_feed_forward(network* net, activations* act);
 
 void print_network(network* net);
-
-cost_data* malloc_cost_data(size_t size_out, size_t n);
-void free_cost_data(cost_data* cdt, size_t n);
-float cost_function(cost_data* cdt, size_t nb_training_examples);

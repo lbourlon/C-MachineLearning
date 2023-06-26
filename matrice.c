@@ -4,23 +4,23 @@
 #include <time.h>
 #include <math.h>
 
-float* malloc_vect(int rows){
-    float* vect = calloc(rows, sizeof(float));
+double* malloc_vect(int rows){
+    double* vect = calloc(rows, sizeof(double));
     return vect;
 }
 
-float** malloc_mat(int rows, int cols){
-    float** mat = malloc(rows * sizeof(float *));
-    for(int r = 0; r < rows; ++r) mat[r] = malloc(cols * sizeof(float));
+double** malloc_mat(int rows, int cols){
+    double** mat = malloc(rows * sizeof(double *));
+    for(int r = 0; r < rows; ++r) mat[r] = malloc(cols * sizeof(double));
     return mat;
 }
 
-void free_mat(float** mat, int rows){
+void free_mat(double** mat, int rows){
     for(int r = 0; r < rows; r++) free(mat[r]);
     free(mat);
 }
 
-void print_vect(float* vect, int rows)
+void print_vect(double* vect, int rows)
 {
     for (int r = 0; r < rows; ++r) {
         printf("| %.6f ", vect[r]);
@@ -29,7 +29,7 @@ void print_vect(float* vect, int rows)
     printf("\n");
 }
 
-void print_mat(float** mat, int rows, int cols){
+void print_mat(double** mat, int rows, int cols){
     printf("mat[%d][%d] = \n", rows, cols);
 
     for (int r = 0; r < rows; r++) {
@@ -42,7 +42,7 @@ void print_mat(float** mat, int rows, int cols){
     printf("\n");
 }
 
-void copy_matA_to_matB(int rows, int cols, float matA[rows][cols], float** matB)
+void copy_matA_to_matB(int rows, int cols, double matA[rows][cols], double** matB)
 {
     for (int r = 0; r < rows; r++) {
         for (int c = 0; c < cols; c++) {
@@ -50,7 +50,7 @@ void copy_matA_to_matB(int rows, int cols, float matA[rows][cols], float** matB)
         }
     }
 }
-void M_times_a_plus_b(float** Mat, float* a, float* b, float* result, int rows, int cols)
+void M_times_a_plus_b(double** Mat, double* a, double* b, double* result, int rows, int cols)
 {
     for (int r = 0; r < rows; r++) {
         result[r] = 0;
@@ -62,9 +62,9 @@ void M_times_a_plus_b(float** Mat, float* a, float* b, float* result, int rows, 
     }
 }
 
-float* multiply_mat_vect(float** mat, float* in_vect, int rows, int cols)
+double* multiply_mat_vect(double** mat, double* in_vect, int rows, int cols)
 {
-    float* out_vect = calloc(rows, sizeof(float));
+    double* out_vect = calloc(rows, sizeof(double));
 
     for (int r = 0; r < rows; r++) {
         for (int c = 0; c < cols; c++) {
@@ -75,8 +75,8 @@ float* multiply_mat_vect(float** mat, float* in_vect, int rows, int cols)
     return out_vect;
 }
 
-float vect_norm(float* vect, size_t n){
-    float norm = 0;
+double vect_norm(double* vect, size_t n){
+    double norm = 0;
     for (size_t x = 0; x <n ; x++) {
         norm += sqrtf(vect[x] * vect[x]);
     }
@@ -86,14 +86,14 @@ float vect_norm(float* vect, size_t n){
 
 
 /* Fills a Vector with random stuff */
-void fill_vect(float* vect, int rows){
+void fill_vect(double* vect, int rows){
     for (int r = 0; r < rows; ++r) {
         vect[r] = drand48();
     }
 }
 
 /* Fills a Matrix with random stuff */
-void fill_mat(float** mat, int rows, int cols){
+void fill_mat(double** mat, int rows, int cols){
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
             mat[r][c] = drand48();

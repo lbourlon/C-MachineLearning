@@ -1,26 +1,26 @@
 // Memory Things
 #include <stddef.h>
-float* malloc_vect(int rows);
-void free_mat(float** mat, int rows);
-float** malloc_mat(int rows, int cols);
+double* malloc_vect(int rows);
+void free_mat(double** mat, int rows);
+double** malloc_mat(int rows, int cols);
 
 // Algebra
-void fill_vect(float* vect, int rows);
-void fill_mat(float** mat, int rows, int cols);
+void fill_vect(double* vect, int rows);
+void fill_mat(double** mat, int rows, int cols);
 
-float vect_norm(float* vect, size_t n);
-float* multiply_mat_vect(float** mat, float* in_vect, int rows, int cols);
+double vect_norm(double* vect, size_t n);
+double* multiply_mat_vect(double** mat, double* in_vect, int rows, int cols);
 
-/* Matrix M (float)
- * vector a (float)
- * vector b (float)
+/* Matrix M (double)
+ * vector a (double)
+ * vector b (double)
  * vector result = M*a+b
  *  
  */
-void M_times_a_plus_b(float** Mat, float* a, float* b, float* result, int rows, int cols);
+void M_times_a_plus_b(double** Mat, double* a, double* b, double* result, int rows, int cols);
 
-void copy_matA_to_matB(int rows, int cols, float matA[rows][cols], float** matB);
+void copy_matA_to_matB(int rows, int cols, double matA[rows][cols], double** matB);
 
 // Print things
-void print_mat(float** matrice, int rows, int cols);
-void print_vect(float* vect, int rows);
+void print_mat(double** matrice, int rows, int cols);
+void print_vect(double* vect, int rows);
