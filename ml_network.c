@@ -116,7 +116,7 @@ activations* activations_malloc(network* net, double* input_vector)
 
     int cols  = net->nodes[0];
     for (int c = 0; c < cols; c++)
-        act->a[0][c] = input_vector[c];
+        act->a[0][c] = input_vector[c] / 5.0;
 
     act->nw_input = act->a[0];
     act->nw_output = act->a[net->layers - 1];
@@ -212,32 +212,36 @@ void network_feed_forward(network* net, activations* act)
         rows = net->nodes[l];
 
         for (int r = 0; r < rows; r++) {
+            double matrix_mult = 0.0;
+
             for (int c = 0; c < cols; c++) {
-                act->z[l][r] += net->weights[l][r][c] * act->a[l-1][c]; 
+                matrix_mult += net->weights[l][r][c] * act->a[l-1][c]; 
             }
-            act->a[l][r] = sigmoid(act->z[l][r] + net->biases[l][r]);
+            act->z[l][r] = matrix_mult - net->biases[l][r];
+
+            act->a[l][r] = sigmoid(act->z[l][r]);
         }
     }
 }
 
 
-/* Multiplies the matrix in the wrong order as if it were transposing it but without shifting any memory arround. Might be slower, because of 
- * non contiguous jumps in memory, but easier than transposing.
- * */
 
 // Looks good
 void backprop_error(network* net, activations* act)
 {
+    /* Multiplies the matrix in the wrong order as if it were transposing it but without shifting any memory arround. Might be slower, because of 
+    non contiguous jumps in memory, but easier than transposing. */
     for(int l = net->layers - 2; l > 0; l--)
     { 
         int cols = net->nodes[l];
         int rows = net->nodes[l+1];
 
         for (int c = 0; c < cols; c++) {
+            double inv_mat_mult = 0.0;
             for (int r = 0; r < rows; r++) {
-                act->error[l][c] += net->weights[l+1][r][c] * act->error[l+1][r];
+                inv_mat_mult += net->weights[l+1][r][c] * act->error[l+1][r];
             }
-            act->error[l][c] *= d_sigmoid(act->z[l][c]);
+            act->error[l][c] = inv_mat_mult * d_sigmoid(act->z[l][c]);
         }
     }
 }
@@ -250,9 +254,9 @@ void nw_gradient_descent(network* net, activations** acts, double learning_coeff
         int rows = net->nodes[l];
 
         for (int r = 0; r < rows; r++) {
-            double d_weight = 0;
             for (int c = 0; c < cols; c++)
             {
+                double d_weight = 0.0;
                 for (size_t x = 0; x < batch_size; x++) 
                 {
                     d_weight += acts[x]->error[l][r] * acts[x]->a[l-1][c];
@@ -263,7 +267,7 @@ void nw_gradient_descent(network* net, activations** acts, double learning_coeff
         }
 
         for (int r = 0; r < rows; r++) {
-            double d_err = 0;
+            double d_err = 0.0;
             for (size_t x = 0; x < batch_size; x++) {
                 d_err += acts[x]->error[l][r];
             }
@@ -272,79 +276,63 @@ void nw_gradient_descent(network* net, activations** acts, double learning_coeff
     }
 }
 
+/*nw_output : size 10, */
+int get_output(double* nw_output, uint8_t expected) {
+    double max_val = 0.0;
+    int imax = 0;
+
+    for(int i = 0; i < 10; i++) {
+        if(max_val > nw_output[i]) {
+            imax = i;
+        }
+    }
+
+    return imax;
+}
+
 void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_size)
 {
     activations** acts = malloc(batch_size * sizeof(activations*));
 
-    double Cost = 0;
+    double Cost = 0.0;
     for (size_t x = 0; x < batch_size; x++)
     {
         acts[x] = activations_malloc(net, images[x]);
-        activations* act = acts[x];
 
         // 1st step
-        network_feed_forward(net, act);
+        network_feed_forward(net, acts[x]);
 
         double* expected_out = calloc(net->size_out, sizeof(double));
         expected_out[(int)labels[x]] = 1.0;
 
-        double tmp_f = 0;
+        // double tmp_f = 0.0;
+        // for (int k = 0; k < net->size_out; k++)
+        // {
+        //     tmp_f = expected_out[k] - acts[x]->nw_output[k];
+        //     Cost += (tmp_f * tmp_f);
+        // }
+
         for (int k = 0; k < net->size_out; k++)
         {
-            tmp_f = expected_out[k] - act->nw_output[k];
-            Cost += (tmp_f * tmp_f);
-
-            // 2nd step // this is good
-            double da_Cx = act->nw_output[k] - expected_out[k];
-            act->last_error[k] = da_Cx * d_sigmoid(act->last_z[k]);
+            // 2nd step
+            double da_Cx = acts[x]->nw_output[k] - expected_out[k];
+            acts[x]->last_error[k] = da_Cx * d_sigmoid(acts[x]->last_z[k])*2.0;
 
             //printf("da_Cx %f, last_error : %f\n", da_Cx, act->last_error[k]);
         }
 
-        print_vect(act->nw_output, net->size_out);
-        print_vect(expected_out, net->size_out);
-        print_vect(act->last_error, net->size_out);
-
-        // for (int m = 0; m < net->size_out; m++) {
-        //
-        //     printf("err_1 : %f | %f : err_2\n",act->error[net->layers-1][m], act->last_error[m]);
-        // }
-        //
-        // activations_print(net, act, 2);
-
-        // 3rd step  // issue here
-        // activations_print(net, act,1);
-        backprop_error(net, act);
-        // activations_print(net, act,2);
+        //3rd step
+        backprop_error(net, acts[x]);
 
         free(expected_out);
-
-        // printf("iteration %zu | ", x);
-        // printf("C_x : %.8f\n",tmp_f * tmp_f);
     }
-
     Cost /= (batch_size);
-    printf("Cost %.6f\n", Cost);
+    // printf("Cost %.6f\n", Cost);
 
-    const double learning_rate = 0.1;
+    const double learning_rate = 3.5;
     const double learning_coeff = learning_rate / batch_size;
 
-    // print_network(net);
     nw_gradient_descent(net, acts, learning_coeff, batch_size);
-    // print_network(net);
-    // activations_print(net, acts[0], 2);
-
-
-    // for (int i = 0; i < net->size_in; i++){
-    //     printf("a : %f | %f : i\n", acts[0]->a[0][i], images[0][i]);
-    // } 
-    // for (int i = 0; i < net->nodes[1]; i++) {
-    //     printf("z : %f | %f : b\n", acts[0]->z[0][i], net->biases[0][i]);
-    // }
-
-    // for (int i = 0; i < net->size_in; i++){
-    //     printf("e : %f | %f : i\n", acts[0]->error[0][i], images[0][i]);
-    // } 
 
 
     for (size_t x = 0; x < batch_size; x++)
@@ -352,17 +340,34 @@ void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_
     free(acts);
 }
 
-// Fisher–Yates shuffle
-void shuffle(int* list, int size)
+void shuffle_imgs_and_lables(uint8_t* labels, double** images, int size)
 {
-    int temp;
+    uint8_t temp_lbl;
+    double* temp_img;
     for(int i = size - 1; i > 0; i--)
     {
         int j = (rand() % i) + 1;
+
+        temp_lbl  = labels[j];
+        labels[j] = labels[i];
+        labels[i] = temp_lbl;
+
+        temp_img  = images[j];
+        images[j] = images[i];
+        images[i] = temp_img;
+    }
+}
+
+// Fisher–Yates shuffle
+void shuffle_double(double* list, int size)
+{
+    uint8_t temp;
+    for(int i = size - 1; i > 0; i--)
+    {
+        uint8_t j = (rand() % i) + 1;
 
         temp    = list[j];
         list[j] = list[i];
         list[i] = temp;
     }
 }
-

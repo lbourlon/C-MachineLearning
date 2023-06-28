@@ -22,6 +22,7 @@ typedef struct activations_st {
     double* last_error;
 } activations;
 
+void shuffle_imgs_and_lables(uint8_t* labels, double** images, int size);
 
 
 network* network_malloc(int nb_layers, int* nb_nodes);

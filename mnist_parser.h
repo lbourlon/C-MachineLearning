@@ -1,4 +1,4 @@
-
+#include <stddef.h>
 #include <stdint.h>
 
 void print_img(double* img, int label);

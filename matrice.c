@@ -88,7 +88,7 @@ double vect_norm(double* vect, size_t n){
 /* Fills a Vector with random stuff */
 void fill_vect(double* vect, int rows){
     for (int r = 0; r < rows; ++r) {
-        vect[r] = drand48();
+        vect[r] = drand48() / 5.0;
     }
 }
 
@@ -96,7 +96,7 @@ void fill_vect(double* vect, int rows){
 void fill_mat(double** mat, int rows, int cols){
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
-            mat[r][c] = drand48();
+            mat[r][c] = drand48() / 5.0;
         }
     }
 }
