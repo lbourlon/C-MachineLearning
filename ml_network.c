@@ -329,7 +329,7 @@ void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_
     Cost /= (batch_size);
     // printf("Cost %.6f\n", Cost);
 
-    const double learning_rate = 3.5;
+    const double learning_rate = 1.2;
     const double learning_coeff = learning_rate / batch_size;
 
     nw_gradient_descent(net, acts, learning_coeff, batch_size);

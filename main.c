@@ -16,33 +16,27 @@ const char* VALIDATE_LBLS = "./mnist/validate/labels.idx1";
 #define LAYERS 4
 
 int main(){
-    int nb_nodes[LAYERS] = {INPUTS, 30, 30, OUTPUTS};
+    int nb_nodes[LAYERS] = {INPUTS, 30, 21, OUTPUTS};
 
     srand48(time(NULL));
     // srand48(0);
 
     network* net = network_malloc(LAYERS, nb_nodes);
     
-    const int tot_images = 59001;
     const int tot_batches = 590;
     const int batch_size = 100;
+    const int tot_images = batch_size*tot_batches;
 
-    const int epochs = 50;
+    const int epochs = 20;
 
     int offset = 0;
 
     double** images = parse_images(TRAIN_IMGS, tot_images, offset);
     uint8_t* labels = parse_labels(TRAIN_LBLS, tot_images, offset);
     for (int e = 0; e < epochs; e++) {
-        // for (int i = 0; i < 5; i++) {
-        //     print_img(images[i], labels[i]);
-        // }
         printf("Epoch = [%02d / %d]\n", e, epochs);
 
         shuffle_imgs_and_lables(labels, images, tot_images);
-        // for (int i = 0; i < 5; i++) {
-        //     print_img(images[i], labels[i]);
-        // }
 
         for (int s = 0; s < tot_batches; s++) {
             int batch_offset = batch_size * s; 
@@ -51,7 +45,7 @@ int main(){
     }
 
     free(labels);
-    for(int i = 0; i < batch_size; i++) free(images[i]);
+    for(int i = 0; i < batch_size * tot_batches; i++) free(images[i]);
     free(images);
     // print_network(net);
 
