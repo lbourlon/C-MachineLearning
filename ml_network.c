@@ -116,7 +116,7 @@ activations* activations_malloc(network* net, double* input_vector)
 
     int cols  = net->nodes[0];
     for (int c = 0; c < cols; c++)
-        act->a[0][c] = input_vector[c] / 5.0;
+        act->a[0][c] = input_vector[c];
 
     act->nw_input = act->a[0];
     act->nw_output = act->a[net->layers - 1];
@@ -202,7 +202,6 @@ double d_sigmoid(double z) {
     return sig * (1.0-sig);
 }
 
-// looks good
 void network_feed_forward(network* net, activations* act)
 {
     int rows = 0, cols = 0;
@@ -217,7 +216,7 @@ void network_feed_forward(network* net, activations* act)
             for (int c = 0; c < cols; c++) {
                 matrix_mult += net->weights[l][r][c] * act->a[l-1][c]; 
             }
-            act->z[l][r] = matrix_mult - net->biases[l][r];
+            act->z[l][r] = matrix_mult + net->biases[l][r];
 
             act->a[l][r] = sigmoid(act->z[l][r]);
         }
@@ -225,8 +224,6 @@ void network_feed_forward(network* net, activations* act)
 }
 
 
-
-// Looks good
 void backprop_error(network* net, activations* act)
 {
     /* Multiplies the matrix in the wrong order as if it were transposing it but without shifting any memory arround. Might be slower, because of 
@@ -263,7 +260,6 @@ void nw_gradient_descent(network* net, activations** acts, double learning_coeff
                 }
                 net->weights[l][r][c] -= learning_coeff * d_weight;
             }
-            // printf("d_err : %0.3f\n",d_weight);
         }
 
         for (int r = 0; r < rows; r++) {
@@ -294,7 +290,7 @@ void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_
 {
     activations** acts = malloc(batch_size * sizeof(activations*));
 
-    double Cost = 0.0;
+    // double Cost = 0.0;
     for (size_t x = 0; x < batch_size; x++)
     {
         acts[x] = activations_malloc(net, images[x]);
@@ -305,6 +301,7 @@ void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_
         double* expected_out = calloc(net->size_out, sizeof(double));
         expected_out[(int)labels[x]] = 1.0;
 
+        // Cost calculation
         // double tmp_f = 0.0;
         // for (int k = 0; k < net->size_out; k++)
         // {
@@ -312,13 +309,12 @@ void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_
         //     Cost += (tmp_f * tmp_f);
         // }
 
+        // calculation of last from dC / da
         for (int k = 0; k < net->size_out; k++)
         {
             // 2nd step
             double da_Cx = acts[x]->nw_output[k] - expected_out[k];
-            acts[x]->last_error[k] = da_Cx * d_sigmoid(acts[x]->last_z[k])*2.0;
-
-            //printf("da_Cx %f, last_error : %f\n", da_Cx, act->last_error[k]);
+            acts[x]->last_error[k] = da_Cx * d_sigmoid(acts[x]->last_z[k]);
         }
 
         //3rd step
@@ -326,10 +322,10 @@ void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_
 
         free(expected_out);
     }
-    Cost /= (batch_size);
+    // Cost /= (batch_size);
     // printf("Cost %.6f\n", Cost);
 
-    const double learning_rate = 1.2;
+    const double learning_rate = 4.95;
     const double learning_coeff = learning_rate / batch_size;
 
     nw_gradient_descent(net, acts, learning_coeff, batch_size);

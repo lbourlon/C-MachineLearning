@@ -16,7 +16,7 @@ const char* VALIDATE_LBLS = "./mnist/validate/labels.idx1";
 #define LAYERS 4
 
 int main(){
-    int nb_nodes[LAYERS] = {INPUTS, 30, 21, OUTPUTS};
+    int nb_nodes[LAYERS] = {INPUTS, 40, 21, OUTPUTS};
 
     srand48(time(NULL));
     // srand48(0);
@@ -27,14 +27,15 @@ int main(){
     const int batch_size = 100;
     const int tot_images = batch_size*tot_batches;
 
-    const int epochs = 20;
+    const int epochs = 70;
 
     int offset = 0;
 
     double** images = parse_images(TRAIN_IMGS, tot_images, offset);
     uint8_t* labels = parse_labels(TRAIN_LBLS, tot_images, offset);
+    print_img(images[1], labels[1]);
     for (int e = 0; e < epochs; e++) {
-        printf("Epoch = [%02d / %d]\n", e, epochs);
+        printf("Epoch = [%02d / %d]\n", e+1, epochs);
 
         shuffle_imgs_and_lables(labels, images, tot_images);
 
@@ -92,7 +93,7 @@ int main(){
 
     printf("Success : [%0.f / %d]", success_rate, nb_img_tests);
     success_rate *= 100.0 / (float)nb_img_tests;
-    printf("| Rate : %f\n", success_rate);
+    printf("| Accuracy : %f\n", success_rate);
 
     free(test_labels);
     for(int i = 0; i < nb_img_tests; i++) free(test_images[i]);

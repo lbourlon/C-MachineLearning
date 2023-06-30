@@ -10,8 +10,6 @@ mnist data source :
 http://yann.lecun.com/exdb/mnist/
 (the ones provided in Nielsen's repo is a python pickle file)
 
-Keeping in mind that in my implementation use a different way of aligning the 
-indices from Nielsen's book. I'll write it up bellow, when I get to it.
 
 ## Motivations
 
@@ -19,6 +17,33 @@ indices from Nielsen's book. I'll write it up bellow, when I get to it.
 * Has real implications when it comes to memory management and algorithm speeds.
 * Honestly just looked like a fun project
 * I'm now in too deep to go back D:
+
+## Structures and Indices alignment
+
+| Network Input  | Hidden layer 1 | Hidden layer 2 | Network Output |
+| -------------  | -------------  | -------------  | -------------  |
+|      N/A       |    net->w[1]   |    net->w[2]   |    net->w[3]   |
+|      N/A       |    net->b[1]   |    net->b[2]   |    net->b[3]   |
+|    act->a[0]   |    act->a[1]   |    act->a[2]   |    act->a[3]   |
+|      N/A       |    act->z[1]   |    act->z[2]   |    act->z[3]   |
+|      N/A       |    act->e[1]   |    act->e[2]   |    act->e[3]   |
+
+
+The struct network contains the information about a given network. That is, the number of
+layers, the number of nodes in each layer, a list of weight matrixes and a list of bias
+vectors.
+
+The struct activations contains the activations in each layer, the weighted activations
+in each layer and the errors for each layer. Where act->a[0] is the activation of the 0th
+layer.
+
+And so net->w[1] and net->[1] are the weight and biases applied to act->a[0] (network input)
+The output of this operation is act->z[1] the 1st weighted activation. Which we then get
+the net->a[1] by applying the sigmoid function.
+
+act->e[1] is used by the backpropagation algorithm, it is a measure of how wrong act->z[1] is.
+
+
 
 ## Equations
 
