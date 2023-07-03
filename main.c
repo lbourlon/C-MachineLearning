@@ -16,24 +16,24 @@ const char* VALIDATE_LBLS = "./mnist/validate/labels.idx1";
 #define LAYERS 4
 
 int main(){
-    int nb_nodes[LAYERS] = {INPUTS, 40, 21, OUTPUTS};
+    int nb_nodes[LAYERS] = {INPUTS, 25, 21, OUTPUTS};
 
-    srand48(time(NULL));
-    // srand48(0);
+    // srand48(time(NULL));
+    srand48(0);
 
     network* net = network_malloc(LAYERS, nb_nodes);
     
-    const int tot_batches = 590;
-    const int batch_size = 100;
+    const int tot_batches = 5900;
+    const int batch_size = 10;
     const int tot_images = batch_size*tot_batches;
 
-    const int epochs = 70;
+    const int epochs = 5;
 
     int offset = 0;
 
     double** images = parse_images(TRAIN_IMGS, tot_images, offset);
     uint8_t* labels = parse_labels(TRAIN_LBLS, tot_images, offset);
-    print_img(images[1], labels[1]);
+
     for (int e = 0; e < epochs; e++) {
         printf("Epoch = [%02d / %d]\n", e+1, epochs);
 
@@ -60,6 +60,8 @@ int main(){
     {
         activations* act = activations_malloc(net, test_images[img]);
 
+        // activations_print(net, act, 0);
+
         network_feed_forward(net, act);
 
         double max_val = 0.0;
@@ -72,7 +74,7 @@ int main(){
             }
         }
 
-        printf("nw_output / expected : %d / %d\n", imax, test_labels[img]);
+        // printf("nw_output / expected : %d / %d\n", imax, test_labels[img]);
 
         if (imax == test_labels[img]) {
             success_rate += 1.0;

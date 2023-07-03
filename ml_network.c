@@ -111,7 +111,6 @@ activations* activations_malloc(network* net, double* input_vector)
         act->z[l]  = malloc_vect(cols);
         act->a[l]  = malloc_vect(cols);
         act->error[l]  = malloc_vect(cols);
-
     }
 
     int cols  = net->nodes[0];
@@ -211,13 +210,12 @@ void network_feed_forward(network* net, activations* act)
         rows = net->nodes[l];
 
         for (int r = 0; r < rows; r++) {
-            double matrix_mult = 0.0;
+            act->z[l][r] = 0.0;
 
             for (int c = 0; c < cols; c++) {
-                matrix_mult += net->weights[l][r][c] * act->a[l-1][c]; 
+                act->z[l][r] += net->weights[l][r][c] * act->a[l-1][c]; 
             }
-            act->z[l][r] = matrix_mult + net->biases[l][r];
-
+            act->z[l][r] += net->biases[l][r];
             act->a[l][r] = sigmoid(act->z[l][r]);
         }
     }
@@ -234,16 +232,15 @@ void backprop_error(network* net, activations* act)
         int rows = net->nodes[l+1];
 
         for (int c = 0; c < cols; c++) {
-            double inv_mat_mult = 0.0;
+            act->error[l][c] = 0.0;
             for (int r = 0; r < rows; r++) {
-                inv_mat_mult += net->weights[l+1][r][c] * act->error[l+1][r];
+                act->error[l][c] += net->weights[l+1][r][c] * act->error[l+1][r];
             }
-            act->error[l][c] = inv_mat_mult * d_sigmoid(act->z[l][c]);
+            act->error[l][c] *= d_sigmoid(act->z[l][c]);
         }
     }
 }
 
-// looks good
 void nw_gradient_descent(network* net, activations** acts, double learning_coeff, size_t batch_size) {
     for(int l = net->layers - 1; l > 0; l--)
     {
@@ -270,20 +267,6 @@ void nw_gradient_descent(network* net, activations** acts, double learning_coeff
             net->biases[l][r] -= learning_coeff * d_err;
         }
     }
-}
-
-/*nw_output : size 10, */
-int get_output(double* nw_output, uint8_t expected) {
-    double max_val = 0.0;
-    int imax = 0;
-
-    for(int i = 0; i < 10; i++) {
-        if(max_val > nw_output[i]) {
-            imax = i;
-        }
-    }
-
-    return imax;
 }
 
 void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_size)

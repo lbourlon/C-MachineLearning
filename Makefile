@@ -2,7 +2,7 @@ LIBS    = -lm
 CC		= gcc
 
 CFLAGS =  -O3
-DEBUG_CFLAGS = -Wall -Wextra -g 
+DEBUG_CFLAGS = -Wall -Wextra -pg 
 
 REQ = main.c matrice.c ml_network.c mnist_parser.c
 
