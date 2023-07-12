@@ -5,6 +5,12 @@
 #include <unistd.h>
 #include "matrice.h"
 
+typedef struct images_t{
+    // maybe do this later
+    double* content;
+    uint8_t label;
+} image;
+
 uint32_t reverse(uint32_t in)
 {
     uint32_t out = 0;
@@ -15,6 +21,25 @@ uint32_t reverse(uint32_t in)
 
     return out;
 }
+
+void shuffle_imgs_and_lables(uint8_t* labels, double** images, int size)
+{
+    uint8_t temp_lbl;
+    double* temp_img;
+    for(int i = size - 1; i > 0; i--)
+    {
+        int j = (rand() % i) + 1;
+
+        temp_lbl  = labels[j];
+        labels[j] = labels[i];
+        labels[i] = temp_lbl;
+
+        temp_img  = images[j];
+        images[j] = images[i];
+        images[i] = temp_img;
+    }
+}
+
 
 uint8_t* parse_labels(const char* labels_path, size_t batch_size, size_t batch_offset)
 {
@@ -98,6 +123,17 @@ double** parse_images(const char* images_path, size_t batch_size, size_t batch_o
     close(fd);
 
     return images;
+}
+
+void parse_labels_and_images(double*** images, uint8_t** labels, const char* images_path, const char* labels_path, size_t batch_size, size_t batch_offset){
+    *images = parse_images(images_path, batch_size, batch_offset);
+    *labels = parse_labels(labels_path, batch_size, batch_offset);
+}
+
+void free_labels_and_images(double** images, uint8_t* labels, int tot_images){
+    free(labels);
+    for(int i = 0; i < tot_images; i++) free(images[i]);
+    free(images);
 }
 
 // I assume its of size 28, 28

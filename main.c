@@ -18,90 +18,23 @@ const char* VALIDATE_LBLS = "./mnist/validate/labels.idx1";
 int main(){
     int nb_nodes[LAYERS] = {INPUTS, 25, 21, OUTPUTS};
 
-    // srand48(time(NULL));
-    srand48(0);
+    srand48(time(NULL));
+    // srand48(0);
 
-    network* net = network_malloc(LAYERS, nb_nodes);
+    network* net = nw_malloc(LAYERS, nb_nodes);
     
     const int tot_batches = 5900;
     const int batch_size = 10;
-    const int tot_images = batch_size*tot_batches;
 
-    const int epochs = 5;
+    const int epochs = 7;
 
-    int offset = 0;
+    nw_stochastic_gradient_descent(net, TRAIN_IMGS, TRAIN_LBLS, tot_batches, batch_size, epochs);
 
-    double** images = parse_images(TRAIN_IMGS, tot_images, offset);
-    uint8_t* labels = parse_labels(TRAIN_LBLS, tot_images, offset);
-
-    for (int e = 0; e < epochs; e++) {
-        printf("Epoch = [%02d / %d]\n", e+1, epochs);
-
-        shuffle_imgs_and_lables(labels, images, tot_images);
-
-        for (int s = 0; s < tot_batches; s++) {
-            int batch_offset = batch_size * s; 
-            nw_mini_batch(net, &images[batch_offset], &labels[batch_offset], batch_size);
-        }
-    }
-
-    free(labels);
-    for(int i = 0; i < batch_size * tot_batches; i++) free(images[i]);
-    free(images);
-    // print_network(net);
-
-    int nb_img_tests = 2000;
-    offset = 0;
-    double** test_images = parse_images(VALIDATE_IMGS, nb_img_tests, offset);
-    uint8_t* test_labels = parse_labels(VALIDATE_LBLS, nb_img_tests, offset);
-
-    float success_rate = 0.0;
-    for (int img = 0; img < nb_img_tests; img++)
-    {
-        activations* act = activations_malloc(net, test_images[img]);
-
-        // activations_print(net, act, 0);
-
-        network_feed_forward(net, act);
-
-        double max_val = 0.0;
-        uint8_t imax = 0;
-
-        for(int o = 0; o < OUTPUTS; o++) {
-            if(max_val <= act->nw_output[o]) {
-                max_val = act->nw_output[o];
-                imax = o;
-            }
-        }
-
-        // printf("nw_output / expected : %d / %d\n", imax, test_labels[img]);
-
-        if (imax == test_labels[img]) {
-            success_rate += 1.0;
-        } 
+    nw_evaluate(net, VALIDATE_IMGS, VALIDATE_LBLS, 0);
+    nw_evaluate(net, VALIDATE_IMGS, VALIDATE_LBLS, 1);
 
 
-        // printf("\nOutput test for img of a %d\n", test_labels[img]);
-        // int output_size = net->nodes[net->layers-1];
-        // for (int o = 0; o < output_size; o++) {
-        //     // printf("\no[%d] -> %.20f", o, act->nw_output[o]);
-        //     printf("\n%d -> %.30f", o, act->a[net->layers-1][o]);
-        // }
-        // printf("\n");
-
-
-        activations_free(act, net->layers);
-    }
-
-    printf("Success : [%0.f / %d]", success_rate, nb_img_tests);
-    success_rate *= 100.0 / (float)nb_img_tests;
-    printf("| Accuracy : %f\n", success_rate);
-
-    free(test_labels);
-    for(int i = 0; i < nb_img_tests; i++) free(test_images[i]);
-    free(test_images);
-
-    network_free(net);
+    nw_free(net);
     return 0;
 }
 

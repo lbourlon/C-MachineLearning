@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "matrice.h"
+#include "mnist_parser.h"
 
 typedef struct network_st {
     int layers;
@@ -27,7 +28,7 @@ typedef struct activations_st {
 } activations;
 
 
-void print_network(network* net)
+void nw_print(network* net)
 {
     printf("Nodes per layer vector : \n");
     for (int l = 0; l < net->layers; l++) {
@@ -141,7 +142,7 @@ void activations_free(activations* act, int layers)
 }
 
 
-network* network_malloc(int layers, int* nodes)
+network* nw_malloc(int layers, int* nodes)
 {
     network* net = malloc(sizeof(network));
 
@@ -174,7 +175,7 @@ network* network_malloc(int layers, int* nodes)
     return net;
 }
 
-void network_free(network* net)
+void nw_free(network* net)
 {
     free_mat(net->weights[0], 1);
     free(net->biases[0]);
@@ -201,7 +202,7 @@ double d_sigmoid(double z) {
     return sig * (1.0-sig);
 }
 
-void network_feed_forward(network* net, activations* act)
+void nw_feed_forward(network* net, activations* act)
 {
     int rows = 0, cols = 0;
     for(int l = 1; l < net->layers; l++)
@@ -279,7 +280,7 @@ void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_
         acts[x] = activations_malloc(net, images[x]);
 
         // 1st step
-        network_feed_forward(net, acts[x]);
+        nw_feed_forward(net, acts[x]);
 
         double* expected_out = calloc(net->size_out, sizeof(double));
         expected_out[(int)labels[x]] = 1.0;
@@ -319,22 +320,75 @@ void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_
     free(acts);
 }
 
-void shuffle_imgs_and_lables(uint8_t* labels, double** images, int size)
-{
-    uint8_t temp_lbl;
-    double* temp_img;
-    for(int i = size - 1; i > 0; i--)
-    {
-        int j = (rand() % i) + 1;
+void nw_stochastic_gradient_descent(network* net, const char* images_path, const char* labels_path, int tot_batches, int batch_size, int epochs){
 
-        temp_lbl  = labels[j];
-        labels[j] = labels[i];
-        labels[i] = temp_lbl;
+    const int tot_images = batch_size*tot_batches;
 
-        temp_img  = images[j];
-        images[j] = images[i];
-        images[i] = temp_img;
+    double** images;
+    uint8_t* labels;
+
+    parse_labels_and_images(&images, &labels, images_path, labels_path, tot_images, 0);
+
+    for (int e = 0; e < epochs; e++) {
+        printf("Epoch = [%02d / %02d]\n", e+1, epochs);
+
+        shuffle_imgs_and_lables(labels, images, tot_images);
+
+        for (int s = 0; s < tot_batches; s++) {
+            int batch_offset = batch_size * s; 
+            nw_mini_batch(net, &images[batch_offset], &labels[batch_offset], batch_size);
+        }
     }
+
+    free_labels_and_images(images, labels, tot_images);
+}
+
+void nw_evaluate(network* net, const char* images_path, const char* labels_path, const int mode){
+    int tot_images = 5000;
+    int offset = 0;
+    if(mode == 1) {
+        offset = 4999;
+        printf("Checking against the 'hard' images\n");
+    } else {
+        printf("Checking against the 'easy' images\n");
+    }
+
+    double** images;
+    uint8_t* labels;
+
+    parse_labels_and_images(&images, &labels, images_path, labels_path, tot_images, offset);
+
+
+    float success_rate = 0.0;
+    for (int img = 0; img < tot_images; img++)
+    {
+        activations* act = activations_malloc(net, images[img]);
+        nw_feed_forward(net, act);
+
+        double max_val = 0.0;
+        uint8_t imax = 0;
+
+        for(int o = 0; o < net->size_out; o++) {
+            if(max_val <= act->nw_output[o]) {
+                max_val = act->nw_output[o];
+                imax = o;
+            }
+        }
+
+        // printf("nw_output / expected : %d / %d\n", imax, test_labels[img]);
+
+        if (imax == labels[img]) {
+            success_rate += 1.0;
+        } 
+
+        activations_free(act, net->layers);
+    }
+
+    printf("Success : [%0.f / %d]", success_rate, tot_images);
+    success_rate *= 100.0 / (float)tot_images;
+    printf("| Accuracy : %f\n", success_rate);
+
+    free_labels_and_images(images, labels, tot_images);
 }
 
 // Fisher–Yates shuffle

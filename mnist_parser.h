@@ -1,7 +1,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void print_img(double* img, int label);
-uint8_t* parse_labels(const char* labels_path, size_t batch_size, size_t batch_offset);
-double** parse_images(const char* images_path, int batch_size, int batch_offset);
 
+typedef struct image_t{
+    double* image_content;
+    uint8_t image_label;
+} image;
+
+void print_img(double* img, int label);
+
+void shuffle_imgs_and_lables(uint8_t* labels, double** images, int size);
+
+void parse_labels_and_images(double*** images, uint8_t** labels, const char* images_path, const char* labels_path, size_t batch_size, size_t batch_offset);
+void free_labels_and_images(double** images, uint8_t* labels, int tot_images);

@@ -22,17 +22,15 @@ typedef struct activations_st {
     double* last_error;
 } activations;
 
-void shuffle_imgs_and_lables(uint8_t* labels, double** images, int size);
-
-
-network* network_malloc(int nb_layers, int* nb_nodes);
-void network_free(network* net);
+network* nw_malloc(int nb_layers, int* nb_nodes);
+void nw_free(network* net);
 
 activations* activations_malloc(network* net, double* input_vector);
 void activations_free(activations* act, int layers);
 void activations_print(network* net, activations* act, int which);
 
-void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_size);
-void network_feed_forward(network* net, activations* act);
+void nw_feed_forward(network* net, activations* act);
+void nw_stochastic_gradient_descent(network* net, const char* images_path, const char* labels_path, int tot_batches, int batch_size, int epochs);
 
-void print_network(network* net);
+void nw_evaluate(network* net, const char* images_path, const char* labels_path, const int mode);
+void nw_print(network* net);
