@@ -45,7 +45,7 @@ act->e[1] is used by the backpropagation algorithm, it is a measure of how wrong
 
 ## Botlenecks
 - nw_feed_forward which takes ~43% of total execution time.
-- nw_mini_batch takes ~43% of total execution time aswell.
+- nw_gradient_descent takes ~55% of total execution time aswell.
 
 Execution times percentages depend on configuration, number of batches and other things. These are for the current main.c file.
 
