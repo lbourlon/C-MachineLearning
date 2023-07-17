@@ -10,7 +10,7 @@ ml: $(REQ)
 	$(CC) $(DEBUG_CFLAGS) -o $@ $^ $(LIBS)
 
 release: $(REQ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(DEBUG_CFLAGS) $(CFLAGS) -o $@ $^ $(LIBS)
 
 valgrind:
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose ./ml

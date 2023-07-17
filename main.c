@@ -13,18 +13,18 @@ const char* VALIDATE_LBLS = "./mnist/validate/labels.idx1";
 
 #define INPUTS 784
 #define OUTPUTS 10
-#define LAYERS 4
+#define LAYERS 3
 
 int main(){
-    int nb_nodes[LAYERS] = {INPUTS, 25, 21, OUTPUTS};
+    int nb_nodes[LAYERS] = {INPUTS, 16, OUTPUTS};
 
     srand48(time(NULL));
     // srand48(0);
 
     network* net = nw_malloc(LAYERS, nb_nodes);
     
-    const int tot_batches = 5900;
-    const int batch_size = 10;
+    const int tot_batches = 5900 / 3;
+    const int batch_size = 30;
 
     const int epochs = 7;
 

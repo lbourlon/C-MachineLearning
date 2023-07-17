@@ -43,7 +43,11 @@ the net->a[1] by applying the sigmoid function.
 
 act->e[1] is used by the backpropagation algorithm, it is a measure of how wrong act->z[1] is.
 
+## Botlenecks
+- nw_feed_forward which takes ~43% of total execution time.
+- nw_mini_batch takes ~43% of total execution time aswell.
 
+Execution times percentages depend on configuration, number of batches and other things. These are for the current main.c file.
 
 ## Equations
 

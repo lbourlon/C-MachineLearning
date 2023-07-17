@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "matrice.h"
 #include "mnist_parser.h"
 
@@ -93,8 +94,20 @@ void activations_print(network* net, activations* act, int which) {
     printf("\n----------------------------------------\n");
 }
 
-activations* activations_malloc(network* net, double* input_vector)
-{
+void activations_reset(network* net, activations* act, double* input_vector) {
+    int cols  = net->nodes[0];
+    memcpy(act->a[0], input_vector, cols * sizeof(double));
+
+    for (int l = 1; l < net->layers; l++) {
+        int cols  = net->nodes[l];
+
+        memset(act->z[l], 0, cols);
+        memset(act->a[l], 0, cols);
+        memset(act->error[l], 0, cols);
+    }
+}
+
+activations* activations_malloc(network* net, double* input_vector) {
     activations* act = malloc(sizeof(activations));
 
     act->z = calloc((net->layers), sizeof(double*));
@@ -270,15 +283,14 @@ void nw_gradient_descent(network* net, activations** acts, double learning_coeff
     }
 }
 
-void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_size)
-{
-    activations** acts = malloc(batch_size * sizeof(activations*));
+void nw_mini_batch(network* net, activations** acts, double** images,  uint8_t* labels, size_t batch_size) {
 
     // double Cost = 0.0;
-    for (size_t x = 0; x < batch_size; x++)
-    {
-        acts[x] = activations_malloc(net, images[x]);
+    for (size_t x = 0; x < batch_size; x++) {
+        // (perf) about 5% of execution time of program
+        activations_reset(net, acts[x], images[x]);
 
+        // (perf) about 43% of execution time of program 
         // 1st step
         nw_feed_forward(net, acts[x]);
 
@@ -293,7 +305,7 @@ void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_
         //     Cost += (tmp_f * tmp_f);
         // }
 
-        // calculation of last from dC / da
+        // calculation of last error from dC / da
         for (int k = 0; k < net->size_out; k++)
         {
             // 2nd step
@@ -312,12 +324,8 @@ void nw_mini_batch(network* net, double** images, uint8_t* labels, size_t batch_
     const double learning_rate = 4.95;
     const double learning_coeff = learning_rate / batch_size;
 
+    // (perf) about 50% of execution time of program
     nw_gradient_descent(net, acts, learning_coeff, batch_size);
-
-
-    for (size_t x = 0; x < batch_size; x++)
-        activations_free(acts[x], net->layers);
-    free(acts);
 }
 
 void nw_stochastic_gradient_descent(network* net, const char* images_path, const char* labels_path, int tot_batches, int batch_size, int epochs){
@@ -329,6 +337,11 @@ void nw_stochastic_gradient_descent(network* net, const char* images_path, const
 
     parse_labels_and_images(&images, &labels, images_path, labels_path, tot_images, 0);
 
+    activations** acts = malloc(batch_size * sizeof(activations*));
+
+    for (int x = 0; x < batch_size; x++)
+        acts[x] = activations_malloc(net, images[x]);
+
     for (int e = 0; e < epochs; e++) {
         printf("Epoch = [%02d / %02d]\n", e+1, epochs);
 
@@ -336,10 +349,14 @@ void nw_stochastic_gradient_descent(network* net, const char* images_path, const
 
         for (int s = 0; s < tot_batches; s++) {
             int batch_offset = batch_size * s; 
-            nw_mini_batch(net, &images[batch_offset], &labels[batch_offset], batch_size);
+            nw_mini_batch(net, acts, &images[batch_offset], &labels[batch_offset], batch_size);
         }
     }
 
+    for (int x = 0; x < batch_size; x++)
+        activations_free(acts[x], net->layers);
+
+    free(acts);
     free_labels_and_images(images, labels, tot_images);
 }
 
