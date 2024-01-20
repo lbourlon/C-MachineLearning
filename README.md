@@ -1,5 +1,26 @@
 # Machine Learning in C for the sake of learning
 
+## Usage
+
+```bash
+
+# You'll need to download the training data for yourself :
+wget http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz
+wget http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz
+wget http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz
+wget http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
+
+# Unzip them to the location the code expects
+mkdir -p mnist/train && mkdir -p mnist/validate
+gzip -d t10k-labels-idx1-ubyte.gz -c > mnist/validate/labels.idx1
+gzip -d t10k-images-idx3-ubyte.gz -c > mnist/validate/images.idx3
+gzip -d train-labels-idx1-ubyte.gz -c > mnist/train/labels.idx1
+gzip -d train-images-idx3-ubyte.gz -c > mnist/train/images.idx3
+
+# Compile and run the application
+make release && ./release
+```
+
 ## Read these : 
 
 * http://neuralnetworksanddeeplearning.com By Michael Nielsen / Dec 2019
@@ -9,7 +30,6 @@
 mnist data source :
 http://yann.lecun.com/exdb/mnist/
 (the ones provided in Nielsen's repo is a python pickle file)
-
 
 ## Motivations
 
